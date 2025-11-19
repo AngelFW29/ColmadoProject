@@ -1,10 +1,16 @@
 package Model;
 
-public class Customer extends Person{
+public class Customer extends Person {
     private String fiscalIdentification;
 
     public Customer(int id, String name, String address, String phone, String fiscalIdentification) {
         super(id, name, address, phone);
+        this.fiscalIdentification = fiscalIdentification;
+    }
+
+    // Constructor without ID
+    public Customer(String name, String address, String phone, String fiscalIdentification) {
+        super(0, name, address, phone);
         this.fiscalIdentification = fiscalIdentification;
     }
 

@@ -1,9 +1,12 @@
 package Model;
 
+import Service.ISubTotal;
+import Service.IFacturable;
+
 import java.util.ArrayList;
 import java.util.Date;
 
-public class Invoice {
+public class Invoice implements IFacturable {
     private int id;
     private Date date;
     private Customer customer;
@@ -21,7 +24,17 @@ public class Invoice {
         this.paymentMethod = paymentMethod;
     }
 
-    public class InvoiceDetails implements ISubTotal{
+    // Constructor for a new invoice
+    public Invoice(Customer customer, String paymentMethod) {
+        this.id = 0;
+        this.date = new Date();
+        this.customer = customer;
+        this.items = new ArrayList<>();
+        this.total = 0;
+        this.paymentMethod = paymentMethod;
+    }
+
+    public class InvoiceDetails implements ISubTotal {
         private int id;
         private Invoice invoice;
         private int quantity;
@@ -35,6 +48,16 @@ public class Invoice {
             this.unitPrice = unitPrice;
             this.subtTotal = subtTotal;
         }
+
+        // Constructor for new details
+        public InvoiceDetails(Invoice invoice, int quantity, double unitPrice) {
+            this.id = 0;
+            this.invoice = invoice;
+            this.quantity = quantity;
+            this.unitPrice = unitPrice;
+            this.subtTotal = quantity * unitPrice;
+        }
+
 
         public int getId() {
             return id;
@@ -77,11 +100,15 @@ public class Invoice {
         }
 
         @Override
-        public double calculateTotal() {
-            return 0;
+        public double calculateSubTotal() {
+            subtTotal = quantity * unitPrice;
+            return subtTotal;
         }
+
     }
 
+
+    // Methods Invoice
     public int getId() {
         return id;
     }
@@ -130,20 +157,38 @@ public class Invoice {
         this.paymentMethod = paymentMethod;
     }
 
-    public void addItem(InvoiceDetails items) {
-        return;
+    public void addItem(InvoiceDetails item) {
+        if (items == null) {
+            items = new ArrayList<>();
+        }
+        items.add(item);
+
+        // Actualiza el total sumando el detalle
+        this.total += item.getSubtTotal();
     }
 
+    @Override
     public double calculateTotal() {
-        return total;
+        double sum = 0;
+
+        if (items != null) {
+            for (InvoiceDetails detail : items) {
+                sum += detail.getSubtTotal();
+            }
+        }
+
+        this.total = sum; // actualiza el campo total de la factura
+        return sum;
     }
 
-    public int generateInvoiceNumber() {
-        return id;
+    @Override
+    public String generateInvoiceNumber() {
+        long timestamp = System.currentTimeMillis();
+        return String.valueOf(timestamp);
     }
 
     public void save() {
-        return;
+        // TODO agregarlo cuando se cree el DAO
+        //  InvoiceDAO.save(this);
     }
-
 }

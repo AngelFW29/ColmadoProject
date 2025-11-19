@@ -20,6 +20,12 @@ public class Product {
         this.expirationDate = expirationDate;
     }
 
+    // Constructor without ID
+    public Product(String name, String category, double unitPrice,
+                   int inventoryQuantity, Date expirationDate) {
+        this(0, name, category, unitPrice, inventoryQuantity, expirationDate);
+    }
+
     public int getId() {
         return id;
     }
@@ -68,7 +74,14 @@ public class Product {
         this.expirationDate = expirationDate;
     }
 
-    // TODO
     public void adjustStock(int qty) {
+        int newQuantity = this.inventoryQuantity + qty;
+        if (newQuantity < 0) {
+            throw new IllegalArgumentException(
+                    "There is insufficient inventory to perform this operation."
+            );
+        }
+
+        this.inventoryQuantity = newQuantity;
     }
 }
