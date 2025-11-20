@@ -20,7 +20,7 @@ public class Product {
         this.expirationDate = expirationDate;
     }
 
-    // Constructor without ID
+
     public Product(String name, String category, double unitPrice,
                    int inventoryQuantity, Date expirationDate) {
         this(0, name, category, unitPrice, inventoryQuantity, expirationDate);

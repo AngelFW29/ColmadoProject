@@ -105,7 +105,6 @@ public class ProductDAO implements ICRUD<Product> {
         return products;
     }
 
-    // Método extra según tu diagrama: productos con stock bajo
     public List<Product> findLowStock() {
         List<Product> lowStockProducts = new ArrayList<>();
         String sql = "SELECT * FROM Product WHERE stock < 5";
