@@ -46,7 +46,6 @@ public class CustomTableGenerator {
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
     }
 
-
     public JScrollPane getScrollPane() {
         return scrollPane;
     }
@@ -61,33 +60,7 @@ public class CustomTableGenerator {
 
     private void configureAppearance() {
         table.setRowHeight(40);
-        table.setFont(new Font("Arial", Font.PLAIN, 14));
-
-        JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Arial", Font.BOLD, 14));
-        header.setBackground(new Color(240, 240, 240));
-        header.setForeground(Color.DARK_GRAY);
-        header.setPreferredSize(new Dimension(header.getWidth(), 45));
-
-        table.setDefaultRenderer(Object.class, new AlternateRowRenderer());
-        table.setSelectionBackground(new Color(184, 207, 229));
-        table.setSelectionForeground(Color.BLACK);
         table.setShowGrid(true);
-        table.setGridColor(new Color(230, 230, 230));
-    }
-
-    static class AlternateRowRenderer extends DefaultTableCellRenderer {
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                                                       boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value,
-                    isSelected, hasFocus, row, column);
-            if (!isSelected) {
-                c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(249, 249, 249));
-            }
-            setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-            return c;
-        }
     }
 
     static class ButtonRenderer extends JPanel implements TableCellRenderer {
@@ -95,16 +68,14 @@ public class CustomTableGenerator {
 
         public ButtonRenderer() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            btnEdit = createButton("✏️", new Color(66, 133, 244));
-            btnDelete = createButton("🗑️", new Color(234, 67, 53));
+            btnEdit = createButton("✏️");
+            btnDelete = createButton("🗑️");
             add(btnEdit);
             add(btnDelete);
         }
 
-        private JButton createButton(String text, Color color) {
+        private JButton createButton(String text) {
             JButton btn = new JButton(text);
-            btn.setBackground(color);
-            btn.setForeground(Color.WHITE);
             btn.setPreferredSize(new Dimension(45, 30));
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
@@ -115,7 +86,6 @@ public class CustomTableGenerator {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
-            setBackground(row % 2 == 0 ? Color.WHITE : new Color(249, 249, 249));
             return this;
         }
     }
@@ -128,8 +98,8 @@ public class CustomTableGenerator {
             super(new JCheckBox());
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-            JButton btnEdit = createButton("✏️", new Color(66, 133, 244));
-            JButton btnDelete = createButton("🗑️", new Color(234, 67, 53));
+            JButton btnEdit = createButton("✏️");
+            JButton btnDelete = createButton("🗑️");
 
             btnEdit.addActionListener(e -> {
                 editAction.actionPerformed(new java.awt.event.ActionEvent(
@@ -147,10 +117,8 @@ public class CustomTableGenerator {
             panel.add(btnDelete);
         }
 
-        private JButton createButton(String text, Color color) {
+        private JButton createButton(String text) {
             JButton btn = new JButton(text);
-            btn.setBackground(color);
-            btn.setForeground(Color.WHITE);
             btn.setPreferredSize(new Dimension(45, 30));
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
@@ -161,7 +129,6 @@ public class CustomTableGenerator {
         public Component getTableCellEditorComponent(JTable table, Object value,
                                                      boolean isSelected, int row, int column) {
             currentRow = row;
-            panel.setBackground(row % 2 == 0 ? Color.WHITE : new Color(249, 249, 249));
             return panel;
         }
 
@@ -169,6 +136,5 @@ public class CustomTableGenerator {
         public Object getCellEditorValue() {
             return "";
         }
-
     }
 }
