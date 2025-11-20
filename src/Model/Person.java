@@ -13,6 +13,10 @@ public abstract class Person {
         this.phone = phone;
     }
 
+    public Person() {
+
+    }
+
     public int getId() {
         return id;
     }
