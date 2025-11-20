@@ -188,7 +188,7 @@ public class Invoice implements IFacturable {
     }
 
     public void save() {
-        // TODO agregarlo cuando se cree el DAO
-        //  InvoiceDAO.save(this);
+        // TODO
+        //InvoiceDAO.save(this);
     }
 }

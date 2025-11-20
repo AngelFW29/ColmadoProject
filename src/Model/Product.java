@@ -81,7 +81,6 @@ public class Product {
                     "There is insufficient inventory to perform this operation."
             );
         }
-
         this.inventoryQuantity = newQuantity;
     }
 }
