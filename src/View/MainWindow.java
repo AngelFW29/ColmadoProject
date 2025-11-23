@@ -1,5 +1,6 @@
 package View;
 
+import DAO.ConnectionMySQL;
 import com.formdev.flatlaf.FlatDarkLaf;
 
 import javax.swing.*;
@@ -10,6 +11,8 @@ import java.awt.event.WindowEvent;
 import java.util.Objects;
 
 public class MainWindow extends JFrame {
+    private ConnectionMySQL connection;
+
     private JPanel mainPanel;
     private JPanel menuPanel;
     private JPanel dashboardPanel;
@@ -24,24 +27,29 @@ public class MainWindow extends JFrame {
     private JPanel accessBtnPanel;
     private JScrollPane tablesContainer;
 
-    MainWindow() {
+    public MainWindow() {
         setTitle("Sistema para Colmado");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setContentPane(mainPanel);
-        setSize(950, 600);
+        setSize(1200, 600);
         setResizable(false);
         setLocationRelativeTo(null);
 
-        inizializeWindow();
+        initializeWindow();
 
         setVisible(true);
     }
 
-    private void inizializeWindow(){
+    private void initializeWindow() {
+        this.connection = new ConnectionMySQL("localhost:3306", "root", "Brijo-0505", "Colmado");
+        this.connection.connect();
+
+        //Aqui agregaremos los controladores cuando los terminemos
+
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
-        loadButtonImage(btnInventory, "/img/inventario.png", 35,35);
-        loadButtonImage(btnSell, "/img/ventas.png", 35,35);
-        loadButtonImage(btnOrders, "/img/pedidos.png", 35,35);
+        loadButtonImage(btnInventory, "/img/inventario.png", 35, 35);
+        loadButtonImage(btnSell, "/img/ventas.png", 35, 35);
+        loadButtonImage(btnOrders, "/img/pedidos.png", 35, 35);
 
         btnInventory.addActionListener(e -> selectMenu("inventory"));
         btnSell.addActionListener(e -> selectMenu("sell"));
@@ -51,6 +59,7 @@ public class MainWindow extends JFrame {
     }
 
     private void selectMenu(String option) {
+
         btnInventory.setSelected(false);
         btnSell.setSelected(false);
         btnOrders.setSelected(false);
@@ -74,6 +83,7 @@ public class MainWindow extends JFrame {
     }
 
     private void loadInventoryView() {
+
         String[] columns = {"ID", "Nombre", "Categoría", "Precio", "Stock", "Proveedor", "Fecha ingreso", "Acciones"};
         Object[][] data = {
                 {1, "Arroz Cristal 5kg", "Alimentos", "$230.00", 20, "Proveedor A", "2023-01-22", ""},
@@ -87,25 +97,27 @@ public class MainWindow extends JFrame {
                 data,
                 e -> {
                     int row = e.getID();
-                    System.out.println("Editar producto ID: " + data[row][0] + " - " + data[row][1]);
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Editando: " + data[row][1],
-                            "Editar Producto",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
+                    int id = (int) data[row][0];
+                    String name = (String) data[row][1];
+
+                    UpdateWindow updateWindow = new UpdateWindow(columns);
+                    System.out.println("Editar producto ID: " + id);
+                    updateWindow.setVisible(true);
                 },
                 e -> {
                     int row = e.getID();
+                    String name = (String) data[row][1];
+
                     int confirm = JOptionPane.showConfirmDialog(
                             this,
-                            "¿Eliminar " + data[row][1] + "?",
+                            "¿Eliminar " + name + "?",
                             "Confirmar Eliminación",
                             JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE
                     );
+
                     if (confirm == JOptionPane.YES_OPTION) {
-                        System.out.println("Eliminado producto ID: " + data[row][0]);
+                        System.out.println("Producto eliminado ID: " + data[row][0]);
                         JOptionPane.showMessageDialog(
                                 this,
                                 "Producto eliminado correctamente",
@@ -119,12 +131,13 @@ public class MainWindow extends JFrame {
         tablesContainer.setViewportView(inventoryTable.getTable());
         openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "Precio", "Stock"});
     }
+
     private void loadSellView() {
         String[] columns = {"ID", "Fecha", "Cliente", "Total", "Método Pago", "Acciones"};
         Object[][] data = {
                 {1, "2023-01-22 10:30", "Juan Pérez", "$450.00", "Efectivo", ""},
-                {2, "2023-01-22 11:15", "María García", "$320.50", "Tarjeta de credito", ""},
-                {3, "2023-01-22 14:20", "Pedro López", "$180.00", "Tarjeta de debito", ""},
+                {2, "2023-01-22 11:15", "María García", "$320.50", "Tarjeta de crédito", ""},
+                {3, "2023-01-22 14:20", "Pedro López", "$180.00", "Tarjeta de débito", ""},
                 {4, "2023-01-23 09:45", "Ana Rodríguez", "$520.75", "Efectivo", ""}
         };
 
@@ -133,7 +146,6 @@ public class MainWindow extends JFrame {
                 data,
                 e -> {
                     int row = e.getID();
-                    System.out.println("Ver detalles de venta ID: " + data[row][0]);
                     JOptionPane.showMessageDialog(
                             this,
                             "Cliente: " + data[row][2] + "\n" +
@@ -149,20 +161,12 @@ public class MainWindow extends JFrame {
                     int confirm = JOptionPane.showConfirmDialog(
                             this,
                             "¿Anular factura #" + data[row][0] + "?\n" +
-                                    "Cliente: " + data[row][2] + "\n" +
-                                    "Total: " + data[row][3],
+                                    "Cliente: " + data[row][2],
                             "Confirmar Anulación",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE
+                            JOptionPane.YES_NO_OPTION
                     );
                     if (confirm == JOptionPane.YES_OPTION) {
                         System.out.println("Factura anulada ID: " + data[row][0]);
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "Factura anulada correctamente",
-                                "Anulación Exitosa",
-                                JOptionPane.INFORMATION_MESSAGE
-                        );
                     }
                 }
         );
@@ -174,10 +178,10 @@ public class MainWindow extends JFrame {
     private void loadOrdersView() {
         String[] columns = {"ID", "Fecha", "Proveedor", "Total", "Estado", "Acciones"};
         Object[][] data = {
-                {1, "2023-01-20 08:00", "Distribuidora Central", "$2,500.00", "Completado", ""},
-                {2, "2023-01-21 09:30", "Alimentos del Norte", "$1,800.50", "Completado", ""},
-                {3, "2023-01-22 10:15", "Productos Frescos SA", "$950.00", "Pendiente", ""},
-                {4, "2023-01-23 11:00", "Bebidas Express", "$1,200.00", "En proceso", ""}
+                {1, "2023-01-20", "Distribuidora Central", "$2,500.00", "Completado", ""},
+                {2, "2023-01-21", "Alimentos del Norte", "$1,800.50", "Completado", ""},
+                {3, "2023-01-22", "Productos Frescos SA", "$950.00", "Pendiente", ""},
+                {4, "2023-01-23", "Bebidas Express", "$1,200.00", "En proceso", ""}
         };
 
         CustomTableGenerator ordersTable = new CustomTableGenerator(
@@ -185,14 +189,13 @@ public class MainWindow extends JFrame {
                 data,
                 e -> {
                     int row = e.getID();
-                    System.out.println("Ver detalles de pedido ID: " + data[row][0]);
                     JOptionPane.showMessageDialog(
                             this,
                             "Proveedor: " + data[row][2] + "\n" +
                                     "Fecha: " + data[row][1] + "\n" +
                                     "Total: " + data[row][3] + "\n" +
                                     "Estado: " + data[row][4],
-                            "Detalles de Pedido #" + data[row][0],
+                            "Detalles Pedido #" + data[row][0],
                             JOptionPane.INFORMATION_MESSAGE
                     );
                 },
@@ -200,21 +203,12 @@ public class MainWindow extends JFrame {
                     int row = e.getID();
                     int confirm = JOptionPane.showConfirmDialog(
                             this,
-                            "¿Cancelar pedido #" + data[row][0] + "?\n" +
-                                    "Proveedor: " + data[row][2] + "\n" +
-                                    "Total: " + data[row][3],
+                            "¿Cancelar pedido #" + data[row][0] + "?",
                             "Confirmar Cancelación",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE
+                            JOptionPane.YES_NO_OPTION
                     );
                     if (confirm == JOptionPane.YES_OPTION) {
                         System.out.println("Pedido cancelado ID: " + data[row][0]);
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "Pedido cancelado correctamente",
-                                "Cancelación Exitosa",
-                                JOptionPane.INFORMATION_MESSAGE
-                        );
                     }
                 }
         );
@@ -223,45 +217,39 @@ public class MainWindow extends JFrame {
         openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"});
     }
 
-
     private void loadLabelImage(JLabel label, String path, int width, int height) {
         try {
-            ImageIcon icon = new ImageIcon(Objects.requireNonNull(
-                    getClass().getResource(path)
-            ));
-
-            Image scaledImage = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            label.setIcon(new ImageIcon(scaledImage));
+            ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
+            Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            label.setIcon(new ImageIcon(scaled));
         } catch (Exception e) {
-            System.err.println("Error loading image: " + e.getMessage());
+            System.err.println("Error loading label image: " + e.getMessage());
         }
     }
 
     private void loadButtonImage(JButton button, String path, int width, int height) {
         try {
             ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
-            Image scaledImage = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            button.setIcon(new ImageIcon(scaledImage));
+            Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            button.setIcon(new ImageIcon(scaled));
 
             button.setHorizontalTextPosition(SwingConstants.RIGHT);
-            button.setVerticalTextPosition(SwingConstants.CENTER);
             button.setIconTextGap(10);
-            button.setFocusPainted(false);
             button.setBorderPainted(false);
         } catch (Exception e) {
-            System.err.println("Error loading image button: " + e.getMessage());
+            System.err.println("Error loading button image: " + e.getMessage());
         }
     }
 
     private void openAddWindow(JButton button, String title, String[] labels) {
-        for (ActionListener al : button.getActionListeners()) {
-            button.removeActionListener(al);
+        for (ActionListener l : button.getActionListeners()) {
+            button.removeActionListener(l);
         }
 
         button.addActionListener(e -> {
             button.setEnabled(false);
-            AddWindow addWindow = new AddWindow(title, labels);
 
+            AddWindow addWindow = new AddWindow(title, labels);
             addWindow.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) {
@@ -272,7 +260,7 @@ public class MainWindow extends JFrame {
     }
 }
 
-class ProgramExecute{
+class ProgramExecute {
     public static void main(String[] args) {
         try {
             FlatDarkLaf.setup();

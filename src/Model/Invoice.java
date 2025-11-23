@@ -24,7 +24,6 @@ public class Invoice implements IFacturable {
         this.paymentMethod = paymentMethod;
     }
 
-    // Constructor for a new invoice
     public Invoice(Customer customer, String paymentMethod) {
         this.id = 0;
         this.date = new Date();
@@ -49,7 +48,6 @@ public class Invoice implements IFacturable {
             this.subtTotal = subtTotal;
         }
 
-        // Constructor for new details
         public InvoiceDetails(Invoice invoice, int quantity, double unitPrice) {
             this.id = 0;
             this.invoice = invoice;

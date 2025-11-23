@@ -41,7 +41,7 @@ public class InventoryManage implements IInventoryManage {
     @Override
     public void checkLowStock(List<Product> products) {
         for (Product p : products) {
-            if (p.getInventoryQuantity() < 5) { // define tu umbral de stock bajo
+            if (p.getInventoryQuantity() < 5) {
                 System.out.println("Stock bajo: " + p.getName() + " (Cantidad: " + p.getInventoryQuantity() + ")");
             }
         }

@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 
 public class CustomTableGenerator {
     private JTable table;
@@ -14,14 +15,6 @@ public class CustomTableGenerator {
         this(columns, data, null, null);
     }
 
-    /**
-     * Constructor: creates table with columns, data and action buttons
-     *
-     * @param columns Column names (include "Acciones" at the end)
-     * @param data Data matrix
-     * @param editAction Action when pressing edit
-     * @param deleteAction Action when pressing delete
-     */
     public CustomTableGenerator(String[] columns, Object[][] data,
                                 ActionListener editAction, ActionListener deleteAction) {
         model = new DefaultTableModel(data, columns) {
@@ -68,8 +61,12 @@ public class CustomTableGenerator {
 
         public ButtonRenderer() {
             setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            btnEdit = createButton("✏️");
-            btnDelete = createButton("🗑️");
+            btnEdit = createButton("");
+            btnDelete = createButton("");
+
+            loadButtonImage(btnEdit, "/img/edit.png", 25, 25);
+            loadButtonImage(btnDelete, "/img/eliminar.png", 25, 25);
+
             add(btnEdit);
             add(btnDelete);
         }
@@ -88,6 +85,23 @@ public class CustomTableGenerator {
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
             return this;
         }
+
+        private void loadButtonImage(JButton button, String path, int width, int height) {
+            try {
+                ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
+                Image scaledImage = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                button.setIcon(new ImageIcon(scaledImage));
+
+                button.setHorizontalTextPosition(SwingConstants.RIGHT);
+                button.setVerticalTextPosition(SwingConstants.CENTER);
+                button.setIconTextGap(10);
+                button.setFocusPainted(false);
+                button.setBorderPainted(false);
+            } catch (Exception e) {
+                System.err.println("Error loading image button: " + e.getMessage());
+            }
+        }
+
     }
 
     static class ButtonEditor extends DefaultCellEditor {
@@ -98,8 +112,9 @@ public class CustomTableGenerator {
             super(new JCheckBox());
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
-            JButton btnEdit = createButton("✏️");
-            JButton btnDelete = createButton("🗑️");
+            JButton btnEdit = createButton("Editar");
+            JButton btnDelete = createButton("Eliminar");
+
 
             btnEdit.addActionListener(e -> {
                 editAction.actionPerformed(new java.awt.event.ActionEvent(
@@ -125,6 +140,7 @@ public class CustomTableGenerator {
             return btn;
         }
 
+
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
                                                      boolean isSelected, int row, int column) {
@@ -136,5 +152,6 @@ public class CustomTableGenerator {
         public Object getCellEditorValue() {
             return "";
         }
+
     }
 }
