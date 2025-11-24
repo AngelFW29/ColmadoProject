@@ -56,7 +56,6 @@ public class Invoice implements IFacturable {
             this.subtTotal = quantity * unitPrice;
         }
 
-
         public int getId() {
             return id;
         }
