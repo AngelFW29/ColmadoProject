@@ -26,6 +26,7 @@ public class MainWindow extends JFrame {
     private JButton btnInventory;
     private JPanel accessBtnPanel;
     private JScrollPane tablesContainer;
+    private JButton btnSearch;
 
     public MainWindow() {
         setTitle("Sistema para Colmado");
@@ -48,6 +49,7 @@ public class MainWindow extends JFrame {
 
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
         loadButtonImage(btnInventory, "/img/inventario.png", 35, 35);
+        loadButtonImage(btnSearch, "/img/lupa.png", 30, 30);
         loadButtonImage(btnSell, "/img/ventas.png", 35, 35);
         loadButtonImage(btnOrders, "/img/pedidos.png", 35, 35);
 
