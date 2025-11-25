@@ -18,7 +18,9 @@ public class InvoiceDAO implements ICRUD<Invoice> {
 
     @Override
     public boolean create(Invoice invoice) {
-        String sql = "INSERT INTO Invoice(dateInvoice, idPerson, total, paymentMethod) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO Invoice (created_at, id_person, total, payment_method) "
+                + "VALUES (?, ?, ?, ?)";
+
         try {
             int rows = conexion.executeUpdate(sql,
                     new java.sql.Timestamp(invoice.getDate().getTime()),
@@ -27,32 +29,37 @@ public class InvoiceDAO implements ICRUD<Invoice> {
                     invoice.getPaymentMethod()
             );
             return rows > 0;
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Error creating invoice: " + e.getMessage());
             return false;
         }
     }
 
     @Override
     public Invoice read(int id) {
-        String sql = "SELECT * FROM Invoice WHERE idInvoice = ?";
+        String sql = "SELECT * FROM Invoice WHERE id_invoice = ?";
+
         try (ResultSet rs = conexion.executeQuery(sql, id)) {
             if (rs.next()) {
+
                 Customer customer = new Customer();
-                customer.setId(rs.getInt("idPerson"));
+                customer.setId(rs.getInt("id_person"));
 
                 return new Invoice(
-                        rs.getInt("idInvoice"),
-                        rs.getTimestamp("dateInvoice"),
+                        rs.getInt("id_invoice"),
+                        rs.getTimestamp("created_at"),
                         customer,
-                        new ArrayList<>(), // detalles opcionales
+                        new ArrayList<>(),
                         rs.getDouble("total"),
-                        rs.getString("paymentMethod")
+                        rs.getString("payment_method")
                 );
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Error reading invoice: " + e.getMessage());
         }
+
         return null;
     }
 
@@ -60,38 +67,64 @@ public class InvoiceDAO implements ICRUD<Invoice> {
     public List<Invoice> findAll() {
         List<Invoice> invoices = new ArrayList<>();
         String sql = "SELECT * FROM Invoice";
+
         try (ResultSet rs = conexion.executeQuery(sql)) {
             while (rs.next()) {
+
                 Customer customer = new Customer();
-                customer.setId(rs.getInt("idPerson"));
+                customer.setId(rs.getInt("id_person"));
 
                 Invoice invoice = new Invoice(
-                        rs.getInt("idInvoice"),
-                        rs.getTimestamp("dateInvoice"),
+                        rs.getInt("id_invoice"),
+                        rs.getTimestamp("created_at"),
                         customer,
-                        new ArrayList<>(), // detalles opcionales
+                        new ArrayList<>(),
                         rs.getDouble("total"),
-                        rs.getString("paymentMethod")
+                        rs.getString("payment_method")
                 );
+
                 invoices.add(invoice);
             }
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Error retrieving invoices: " + e.getMessage());
         }
+
         return invoices;
     }
 
     @Override
-    public boolean update(Invoice entity) {
-        // No implementado
-        throw new UnsupportedOperationException("Update not supported for Invoice");
+    public boolean update(Invoice invoice) {
+        String sql = "UPDATE Invoice SET id_person = ?, total = ?, payment_method = ? "
+                + "WHERE id_invoice = ?";
+
+        try {
+            int rows = conexion.executeUpdate(sql,
+                    invoice.getCustomer().getId(),
+                    invoice.getTotal(),
+                    invoice.getPaymentMethod(),
+                    invoice.getIdInvoice()
+            );
+
+            return rows > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Error updating invoice: " + e.getMessage());
+            return false;
+        }
     }
 
     @Override
     public boolean delete(int id) {
-        // No implementado
-        throw new UnsupportedOperationException("Delete not supported for Invoice");
+        String sql = "DELETE FROM Invoice WHERE id_invoice = ?";
+
+        try {
+            int rows = conexion.executeUpdate(sql, id);
+            return rows > 0;
+
+        } catch (SQLException e) {
+            System.out.println("Error deleting invoice: " + e.getMessage());
+            return false;
+        }
     }
-
-
 }

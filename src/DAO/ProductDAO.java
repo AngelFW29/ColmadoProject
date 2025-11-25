@@ -42,7 +42,7 @@ public class ProductDAO implements ICRUD<Product> {
                 return new Product(
                         rs.getInt("idProduct"),
                         rs.getString("name"),
-                        rs.getString("categoria"),
+                        rs.getInt("categoria"),
                         rs.getDouble("unitPrice"),
                         rs.getInt("stock"),
                         rs.getDate("expirationDate")
@@ -94,7 +94,7 @@ public class ProductDAO implements ICRUD<Product> {
                 products.add(new Product(
                         rs.getInt("idProduct"),
                         rs.getString("name"),
-                        rs.getString("categoria"),
+                        rs.getInt("categoria"),
                         rs.getDouble("unitPrice"),
                         rs.getInt("stock"),
                         rs.getDate("expirationDate")
@@ -114,7 +114,7 @@ public class ProductDAO implements ICRUD<Product> {
                 lowStockProducts.add(new Product(
                         rs.getInt("idProduct"),
                         rs.getString("name"),
-                        rs.getString("categoria"),
+                        rs.getInt("categoria"),
                         rs.getDouble("unitPrice"),
                         rs.getInt("stock"),
                         rs.getDate("expirationDate")

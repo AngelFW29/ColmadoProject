@@ -5,12 +5,12 @@ import java.util.Date;
 public class Product {
     private int id;
     private String name;
-    private String category;
+    private int category;
     private double unitPrice;
     private int inventoryQuantity;
     private Date expirationDate;
 
-    public Product(int id, String name, String category, double unitPrice,
+    public Product(int id, String name, int category, double unitPrice,
                    int inventoryQuantity, Date expirationDate) {
         this.id = id;
         this.name = name;
@@ -20,7 +20,7 @@ public class Product {
         this.expirationDate = expirationDate;
     }
 
-    public Product(String name, String category, double unitPrice,
+    public Product(String name, int category, double unitPrice,
                    int inventoryQuantity, Date expirationDate) {
         this(0, name, category, unitPrice, inventoryQuantity, expirationDate);
     }
@@ -41,11 +41,11 @@ public class Product {
         this.name = name;
     }
 
-    public String getCategory() {
+    public int getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(int category) {
         this.category = category;
     }
 
