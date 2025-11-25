@@ -20,7 +20,6 @@ public class Product {
         this.expirationDate = expirationDate;
     }
 
-
     public Product(String name, String category, double unitPrice,
                    int inventoryQuantity, Date expirationDate) {
         this(0, name, category, unitPrice, inventoryQuantity, expirationDate);
