@@ -9,10 +9,10 @@ import java.util.List;
 
 public class CustomerDAO implements ICRUD<Customer> {
 
-    private ConnectionMySQL conexion;
+    private final ConnectionMySQL conexion;
 
-    public CustomerDAO(ConnectionMySQL conexion) {
-        this.conexion = conexion;
+    public CustomerDAO() {
+        this.conexion = ConnectionMySQL.getInstance();
     }
 
     @Override
