@@ -8,10 +8,10 @@ import java.util.List;
 
 public class SupplierDAO implements ICRUD<Supplier> {
 
-    private ConnectionMySQL conexion;
+    private final ConnectionMySQL conexion;
 
-    public SupplierDAO(ConnectionMySQL conexion) {
-        this.conexion = conexion;
+    public SupplierDAO() {
+        this.conexion = ConnectionMySQL.getInstance();
     }
 
     @Override

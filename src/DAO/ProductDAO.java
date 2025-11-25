@@ -5,14 +5,15 @@ import Model.Product;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class ProductDAO implements ICRUD<Product> {
 
-    private ConnectionMySQL conexion;
+    private final ConnectionMySQL conexion;
 
-    public ProductDAO(ConnectionMySQL conexion) {
-        this.conexion = conexion;
+    public ProductDAO() {
+        this.conexion = ConnectionMySQL.getInstance();
     }
 
     @Override
@@ -62,7 +63,7 @@ public class ProductDAO implements ICRUD<Product> {
                     product.getCategory(),
                     product.getUnitPrice(),
                     product.getInventoryQuantity(),
-                    new java.sql.Date(product.getExpirationDate().getTime()),
+                    new Date(product.getExpirationDate().getTime()),
                     product.getId()
             );
             return rows > 0;

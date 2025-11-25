@@ -2,69 +2,86 @@ package DAO;
 
 import java.sql.*;
 
-
 public class ConnectionMySQL {
-    private final String host;
-    private final String user;
-    private final String password;
-    private final String database;
+    private static final String HOST = "localhost:3306";
+    private static final String USER = "root";
+    private static final String PASSWORD = "Brijo-0505";
+    private static final String DATABASE = "Colmado";
+
     private Connection connection;
 
-    public ConnectionMySQL(String host, String user, String password, String database) {
-        this.host = host;
-        this.user = user;
-        this.password = password;
-        this.database = database;
+    private static ConnectionMySQL instance;
 
+    private ConnectionMySQL() {
+        connect();
     }
 
-    public void connect() {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            String url = "jdbc:mysql://" + host + "/" + database + "?useSSL=false&serverTimezone=UTC";
-
-            connection = DriverManager.getConnection(url, user, password);
-
-        } catch (ClassNotFoundException e) {
-            System.out.println("Error: el driver de MySQL no se encuentra.");
-        } catch (SQLException e) {
-            System.out.println("Error al conectar con MySQL: " + e.getMessage());
+    public static synchronized ConnectionMySQL getInstance() {
+        if (instance == null) {
+            instance = new ConnectionMySQL();
+        } else {
+            try {
+                if (instance.getConnection().isClosed()) {
+                    instance.connect();
+                }
+            } catch (SQLException e) {
+                System.out.println("Error al verificar el estado de la conexión: " + e.getMessage());
+            }
         }
+        return instance;
     }
 
     public Connection getConnection() {
         return connection;
     }
 
-    public void close() {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+    private void connect() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            String url = "jdbc:mysql://" + HOST + "/" + DATABASE + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+
+            connection = DriverManager.getConnection(url, USER, PASSWORD);
+            System.out.println("Conexión exitosa a la base de datos: " + DATABASE);
+
+        } catch (ClassNotFoundException e) {
+            System.err.println("Error: Driver MySQL no encontrado.");
+        } catch (SQLException e) {
+            System.err.println("Error SQL: " + e.getMessage());
         }
     }
 
+    public void close() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    // Para preparar sentencias
     public PreparedStatement prepare(String sql) throws SQLException {
-        if (connection == null || connection.isClosed())
+        if (connection == null || connection.isClosed()) {
             connect();
+        }
+        return connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+    }
 
-        return connection.prepareStatement(sql);
-    }       
-
+    // Para SELECT (Devuelve ResultSet)
     public ResultSet executeQuery(String sql, Object... params) throws SQLException {
         PreparedStatement stmt = prepare(sql);
         setParams(stmt, params);
-
         return stmt.executeQuery();
     }
 
+    // Para INSERT, UPDATE, DELETE (Devuelve int)
     public int executeUpdate(String sql, Object... params) throws SQLException {
-        PreparedStatement stmt = prepare(sql);
-        setParams(stmt, params);
-
-        return stmt.executeUpdate();
+        try (PreparedStatement stmt = prepare(sql)) {
+            setParams(stmt, params);
+            return stmt.executeUpdate();
+        }
     }
 
     private void setParams(PreparedStatement stmt, Object... params) throws SQLException {
@@ -72,5 +89,4 @@ public class ConnectionMySQL {
             stmt.setObject(i + 1, params[i]);
         }
     }
-
 }

@@ -10,10 +10,10 @@ import java.util.List;
 
 public class InvoiceDAO implements ICRUD<Invoice> {
 
-    private ConnectionMySQL conexion;
+    private final ConnectionMySQL conexion;
 
-    public InvoiceDAO(ConnectionMySQL conexion) {
-        this.conexion = conexion;
+    public InvoiceDAO() {
+        this.conexion = ConnectionMySQL.getInstance();
     }
 
     @Override
