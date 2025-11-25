@@ -1,11 +1,13 @@
 package View;
 
 import DAO.ConnectionMySQL;
+import Util.CustomTableGenerator;
 import com.formdev.flatlaf.FlatDarkLaf;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.ContainerEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
@@ -26,6 +28,7 @@ public class MainWindow extends JFrame {
     private JButton btnInventory;
     private JPanel accessBtnPanel;
     private JScrollPane tablesContainer;
+    private JButton btnSearch;
 
     public MainWindow() {
         setTitle("Sistema para Colmado");
@@ -41,13 +44,12 @@ public class MainWindow extends JFrame {
     }
 
     private void initializeWindow() {
-        this.connection = new ConnectionMySQL("localhost:3306", "root", "Brijo-0505", "Colmado");
-        this.connection.connect();
 
         //Aqui agregaremos los controladores cuando los terminemos
 
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
         loadButtonImage(btnInventory, "/img/inventario.png", 35, 35);
+        loadButtonImage(btnSearch, "/img/lupa.png", 30, 30);
         loadButtonImage(btnSell, "/img/ventas.png", 35, 35);
         loadButtonImage(btnOrders, "/img/pedidos.png", 35, 35);
 

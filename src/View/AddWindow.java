@@ -1,5 +1,7 @@
 package View;
 
+import Util.DynamicFormPanel;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
@@ -22,7 +24,7 @@ public class AddWindow extends JFrame {
         setTitle("Agregar " + title);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setContentPane(mainPanel);
-        setSize(600, 400);
+        setSize(400, 400);
         setResizable(false);
         setLocationRelativeTo(null);
 
