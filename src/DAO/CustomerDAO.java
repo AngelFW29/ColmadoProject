@@ -17,7 +17,7 @@ public class CustomerDAO implements ICRUD<Customer> {
 
     @Override
     public boolean create(Customer customer) {
-        String sql = "INSERT INTO Person(name, address, phone, typePerson, fiscalIdentification) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Person(name, address, phone, type_person, fiscal_identification) VALUES (?, ?, ?, ?, ?)";
         try {
             int rows = conexion.executeUpdate(sql,
                     customer.getName(),
@@ -35,15 +35,15 @@ public class CustomerDAO implements ICRUD<Customer> {
 
     @Override
     public Customer read(int id) {
-        String sql = "SELECT * FROM Person WHERE idPerson = ? AND typePerson = 'Cliente'";
+        String sql = "SELECT * FROM Person WHERE id_person = ? AND type_person = 'Cliente'";
         try (ResultSet rs = conexion.executeQuery(sql, id)) {
             if (rs.next()) {
                 return new Customer(
-                        rs.getInt("idPerson"),
+                        rs.getInt("id_person"),
                         rs.getString("name"),
                         rs.getString("address"),
                         rs.getString("phone"),
-                        rs.getString("fiscalIdentification")
+                        rs.getString("fiscal_identification")
                 );
             }
         } catch (SQLException e) {
@@ -54,7 +54,7 @@ public class CustomerDAO implements ICRUD<Customer> {
 
     @Override
     public boolean update(Customer customer) {
-        String sql = "UPDATE Person SET name = ?, address = ?, phone = ?, fiscalIdentification = ? WHERE idPerson = ? AND typePerson = 'Cliente'";
+        String sql = "UPDATE Person SET name = ?, address = ?, phone = ?, fiscal_identification = ? WHERE id_person = ? AND type_person = 'Cliente'";
         try {
             int rows = conexion.executeUpdate(sql,
                     customer.getName(),
@@ -72,7 +72,7 @@ public class CustomerDAO implements ICRUD<Customer> {
 
     @Override
     public boolean delete(int id) {
-        String sql = "DELETE FROM Person WHERE idPerson = ? AND typePerson = 'Cliente'";
+        String sql = "DELETE FROM Person WHERE id_person = ? AND type_person = 'Cliente'";
         try {
             int rows = conexion.executeUpdate(sql, id);
             return rows > 0;
@@ -85,15 +85,15 @@ public class CustomerDAO implements ICRUD<Customer> {
     @Override
     public List<Customer> findAll() {
         List<Customer> customers = new ArrayList<>();
-        String sql = "SELECT * FROM Person WHERE typePerson = 'Cliente'";
+        String sql = "SELECT * FROM Person WHERE type_person = 'Cliente'";
         try (ResultSet rs = conexion.executeQuery(sql)) {
             while (rs.next()) {
                 customers.add(new Customer(
-                        rs.getInt("idPerson"),
+                        rs.getInt("id_person"),
                         rs.getString("name"),
                         rs.getString("address"),
                         rs.getString("phone"),
-                        rs.getString("fiscalIdentification")
+                        rs.getString("fiscal_identification")
                 ));
             }
         } catch (SQLException e) {

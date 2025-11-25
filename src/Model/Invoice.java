@@ -6,6 +6,7 @@ import Service.IFacturable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Invoice implements IFacturable {
     private int id;
@@ -58,8 +59,8 @@ public class Invoice implements IFacturable {
         return items;
     }
 
-    public void setItems(ArrayList<InvoiceDetails> items) {
-        this.items = items;
+    public void setItems(List<InvoiceDetails> items) {
+        this.items = new ArrayList<>(items);
     }
 
     public Customer getCustomer() {
