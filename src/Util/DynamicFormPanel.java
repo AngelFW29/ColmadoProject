@@ -1,4 +1,4 @@
-package View;
+package Util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,6 +20,7 @@ public class DynamicFormPanel extends JPanel {
 
         for (String label : labels) {
             JLabel jLabel = new JLabel(label);
+            jLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 16));
             JTextField jTextField = new JTextField(15);
             fields.put(label, jTextField);
 
