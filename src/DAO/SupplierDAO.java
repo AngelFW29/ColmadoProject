@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class SupplierDAO implements ICRUD<Supplier> {
 
     private final ConnectionMySQL conexion;
@@ -17,44 +16,46 @@ public class SupplierDAO implements ICRUD<Supplier> {
 
     @Override
     public boolean create(Supplier supplier) {
-        String sql = "INSERT INTO Person(name, address, phone, typePerson, fiscalIdentification) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Person(name, address, phone, type_person, fiscal_identification) VALUES (?, ?, ?, ?, ?)";
+
         try {
             int rows = conexion.executeUpdate(sql,
                     supplier.getName(),
                     supplier.getAddress(),
                     supplier.getPhone(),
-                    supplier.getTypePerson(),
+                    "Proveedor",
                     supplier.getFiscalIdentification()
             );
             return rows > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new RuntimeException("Error al registrar el proveedor: " + e.getMessage(), e);
         }
     }
 
     @Override
     public Supplier read(int id) {
-        String sql = "SELECT * FROM Person WHERE idPerson = ? AND typePerson = 'Proveedor'";
+        String sql = "SELECT * FROM Person WHERE id_person = ? AND type_person = 'Proveedor'";
+
         try (ResultSet rs = conexion.executeQuery(sql, id)) {
             if (rs.next()) {
                 return new Supplier(
-                        rs.getInt("idPerson"),
+                        rs.getInt("id_person"),
                         rs.getString("name"),
                         rs.getString("address"),
                         rs.getString("phone"),
-                        rs.getString("fiscalIdentification")
+                        rs.getString("fiscal_identification")
                 );
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error al consultar el proveedor: " + e.getMessage(), e);
         }
         return null;
     }
 
     @Override
     public boolean update(Supplier supplier) {
-        String sql = "UPDATE Person SET name = ?, address = ?, phone = ?, fiscalIdentification = ? WHERE idPerson = ? AND typePerson = 'Proveedor'";
+        String sql = "UPDATE Person SET name = ?, address = ?, phone = ?, fiscal_identification = ? WHERE id_person = ? AND type_person = 'Proveedor'";
+
         try {
             int rows = conexion.executeUpdate(sql,
                     supplier.getName(),
@@ -65,39 +66,39 @@ public class SupplierDAO implements ICRUD<Supplier> {
             );
             return rows > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new RuntimeException("Error al actualizar el proveedor: " + e.getMessage(), e);
         }
     }
 
     @Override
     public boolean delete(int id) {
-        String sql = "DELETE FROM Person WHERE idPerson = ? AND typePerson = 'Proveedor'";
+        String sql = "DELETE FROM Person WHERE id_person = ? AND type_person = 'Proveedor'";
+
         try {
             int rows = conexion.executeUpdate(sql, id);
             return rows > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            throw new RuntimeException("Error al eliminar el proveedor (verifique que no tenga compras asociadas): " + e.getMessage(), e);
         }
     }
 
     @Override
     public List<Supplier> findAll() {
         List<Supplier> suppliers = new ArrayList<>();
-        String sql = "SELECT * FROM Person WHERE typePerson = 'Proveedor'";
+        String sql = "SELECT * FROM Person WHERE type_person = 'Proveedor'";
+
         try (ResultSet rs = conexion.executeQuery(sql)) {
             while (rs.next()) {
                 suppliers.add(new Supplier(
-                        rs.getInt("idPerson"),
+                        rs.getInt("id_person"),
                         rs.getString("name"),
                         rs.getString("address"),
                         rs.getString("phone"),
-                        rs.getString("fiscalIdentification")
+                        rs.getString("fiscal_identification")
                 ));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Error al listar los proveedores: " + e.getMessage(), e);
         }
         return suppliers;
     }
