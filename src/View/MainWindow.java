@@ -1,11 +1,13 @@
 package View;
 
 import DAO.ConnectionMySQL;
+import Util.CustomTableGenerator;
 import com.formdev.flatlaf.FlatDarkLaf;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.ContainerEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Objects;
@@ -42,8 +44,6 @@ public class MainWindow extends JFrame {
     }
 
     private void initializeWindow() {
-        this.connection = new ConnectionMySQL("localhost:3306", "root", "Brijo-0505", "Colmado");
-        this.connection.connect();
 
         //Aqui agregaremos los controladores cuando los terminemos
 
