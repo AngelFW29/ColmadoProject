@@ -2,10 +2,11 @@ package DAO;
 
 import Model.Product;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class ProductDAO implements ICRUD<Product> {
@@ -18,14 +19,18 @@ public class ProductDAO implements ICRUD<Product> {
 
     @Override
     public boolean create(Product product) {
-        String sql = "INSERT INTO Product(name,  id_category, unit_price, current_stock, expiration_date) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Product(name, id_category, unit_price, current_stock, expiration_date) VALUES (?, ?, ?, ?, ?)";
         try {
+            Date sqlDate = (product.getExpirationDate() != null)
+                    ? java.sql.Date.valueOf(product.getExpirationDate())
+                    : null;
+
             int rows = conexion.executeUpdate(sql,
                     product.getName(),
                     product.getCategory(),
                     product.getUnitPrice(),
                     product.getInventoryQuantity(),
-                    new java.sql.Date(product.getExpirationDate().getTime())
+                    sqlDate
             );
             return rows > 0;
         } catch (SQLException e) {
@@ -39,14 +44,7 @@ public class ProductDAO implements ICRUD<Product> {
         String sql = "SELECT * FROM Product WHERE id_product = ?";
         try (ResultSet rs = conexion.executeQuery(sql, id)) {
             if (rs.next()) {
-                return new Product(
-                        rs.getInt("id_product"),
-                        rs.getString("name"),
-                        rs.getInt(" id_category"),
-                        rs.getDouble("unit_price"),
-                        rs.getInt("current_stock"),
-                        rs.getDate("expiration_date")
-                );
+                return mapResultSetToProduct(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -56,14 +54,18 @@ public class ProductDAO implements ICRUD<Product> {
 
     @Override
     public boolean update(Product product) {
-        String sql = "UPDATE Product SET name = ?,  id_category = ?, unit_price = ?, current_stock = ?, expiration_date = ? WHERE id_product = ?";
+        String sql = "UPDATE Product SET name = ?, id_category = ?, unit_price = ?, current_stock = ?, expiration_date = ? WHERE id_product = ?";
         try {
+            Date sqlDate = (product.getExpirationDate() != null)
+                    ? java.sql.Date.valueOf(product.getExpirationDate())
+                    : null;
+
             int rows = conexion.executeUpdate(sql,
                     product.getName(),
                     product.getCategory(),
                     product.getUnitPrice(),
                     product.getInventoryQuantity(),
-                    new Date(product.getExpirationDate().getTime()),
+                    sqlDate,
                     product.getId()
             );
             return rows > 0;
@@ -91,14 +93,7 @@ public class ProductDAO implements ICRUD<Product> {
         String sql = "SELECT * FROM Product";
         try (ResultSet rs = conexion.executeQuery(sql)) {
             while (rs.next()) {
-                products.add(new Product(
-                        rs.getInt("id_product"),
-                        rs.getString("name"),
-                        rs.getInt(" id_category"),
-                        rs.getDouble("unit_price"),
-                        rs.getInt("current_stock"),
-                        rs.getDate("expiration_date")
-                ));
+                products.add(mapResultSetToProduct(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -111,18 +106,25 @@ public class ProductDAO implements ICRUD<Product> {
         String sql = "SELECT * FROM Product WHERE current_stock < 5";
         try (ResultSet rs = conexion.executeQuery(sql)) {
             while (rs.next()) {
-                lowStockProducts.add(new Product(
-                        rs.getInt("id_product"),
-                        rs.getString("name"),
-                        rs.getInt(" id_category"),
-                        rs.getDouble("unit_price"),
-                        rs.getInt("current_stock"),
-                        rs.getDate("expiration_date")
-                ));
+                lowStockProducts.add(mapResultSetToProduct(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return lowStockProducts;
+    }
+
+    private Product mapResultSetToProduct(ResultSet rs) throws SQLException {
+        Date dbDate = rs.getDate("expiration_date");
+        LocalDate localDate = (dbDate != null) ? dbDate.toLocalDate() : null;
+
+        return new Product(
+                rs.getInt("id_product"),
+                rs.getString("name"),
+                rs.getInt("id_category"),
+                rs.getDouble("unit_price"),
+                rs.getInt("current_stock"),
+                localDate
+        );
     }
 }

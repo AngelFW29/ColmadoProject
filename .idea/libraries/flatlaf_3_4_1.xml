@@ -3,6 +3,7 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/libs/flatlaf-3.4.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/mysql-connector-j-9.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/jcalendar-1.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

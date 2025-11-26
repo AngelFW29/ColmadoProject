@@ -1,6 +1,6 @@
 package Model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public class Product {
     private int id;
@@ -8,10 +8,12 @@ public class Product {
     private int category;
     private double unitPrice;
     private int inventoryQuantity;
-    private Date expirationDate;
+    private LocalDate expirationDate;
+
+    public Product() {}
 
     public Product(int id, String name, int category, double unitPrice,
-                   int inventoryQuantity, Date expirationDate) {
+                   int inventoryQuantity, LocalDate expirationDate) {
         this.id = id;
         this.name = name;
         this.category = category;
@@ -21,7 +23,7 @@ public class Product {
     }
 
     public Product(String name, int category, double unitPrice,
-                   int inventoryQuantity, Date expirationDate) {
+                   int inventoryQuantity, LocalDate expirationDate) {
         this(0, name, category, unitPrice, inventoryQuantity, expirationDate);
     }
 
@@ -65,11 +67,11 @@ public class Product {
         this.inventoryQuantity = inventoryQuantity;
     }
 
-    public Date getExpirationDate() {
+    public LocalDate getExpirationDate() {
         return expirationDate;
     }
 
-    public void setExpirationDate(Date expirationDate) {
+    public void setExpirationDate(LocalDate expirationDate) {
         this.expirationDate = expirationDate;
     }
 

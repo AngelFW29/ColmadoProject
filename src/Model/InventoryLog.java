@@ -5,22 +5,23 @@ import java.time.LocalDateTime;
 public class InventoryLog {
     private int idLog;
     private int idProduct;
-    private String typeMovement;
+    private MovementType movementType;
     private int quantityChange;
     private LocalDateTime movementDate;
 
-    public InventoryLog(int idLog, int idProduct, String typeMovement, int quantityChange, LocalDateTime movementDate) {
+    public InventoryLog(int idLog, int idProduct, MovementType typeMovement, int quantityChange, LocalDateTime movementDate) {
         this.idLog = idLog;
         this.idProduct = idProduct;
-        this.typeMovement = typeMovement;
+        this.movementType = typeMovement;
         this.quantityChange = quantityChange;
         this.movementDate = movementDate;
     }
 
-    public InventoryLog(int idProduct, String typeMovement, int quantityChange) {
+    public InventoryLog(int idProduct, MovementType typeMovement, int quantityChange) {
         this.idProduct = idProduct;
-        this.typeMovement = typeMovement;
+        this.movementType = typeMovement;
         this.quantityChange = quantityChange;
+        this.movementDate = LocalDateTime.now();
     }
 
     public int getIdLog() {
@@ -39,12 +40,12 @@ public class InventoryLog {
         this.idProduct = idProduct;
     }
 
-    public String getTypeMovement() {
-        return typeMovement;
+    public MovementType getMovementType() {
+        return movementType;
     }
 
-    public void setTypeMovement(String typeMovement) {
-        this.typeMovement = typeMovement;
+    public void setMovementType(MovementType movementType) {
+        this.movementType = movementType;
     }
 
     public int getQuantityChange() {

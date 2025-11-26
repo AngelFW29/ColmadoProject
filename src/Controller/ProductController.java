@@ -3,7 +3,7 @@ package Controller;
 import DAO.ProductDAO;
 import Model.Product;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 public class ProductController {
@@ -14,7 +14,7 @@ public class ProductController {
     }
 
     // Create Product
-    public boolean addProduct(String name, int category, double unitPrice, int inventoryQuantity, Date expirationDate) {
+    public boolean addProduct(String name, int category, double unitPrice, int inventoryQuantity, LocalDate expirationDate) {
         Product product = new Product(0, name, category, unitPrice, inventoryQuantity, expirationDate);
         return productDAO.create(product);
     }
@@ -25,7 +25,7 @@ public class ProductController {
     }
 
     // Update Product
-    public boolean updateProduct(int id, String name, int category, double unitPrice, int inventoryQuantity, Date expirationDate) {
+    public boolean updateProduct(int id, String name, int category, double unitPrice, int inventoryQuantity, LocalDate expirationDate) {
         Product product = new Product(id, name, category, unitPrice, inventoryQuantity, expirationDate);
         return productDAO.update(product);
     }

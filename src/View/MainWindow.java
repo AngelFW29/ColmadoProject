@@ -1,19 +1,43 @@
 package View;
 
-import DAO.ConnectionMySQL;
+import Controller.CustomerController;
+import Controller.InventoryLogController;
+import Controller.ProductController;
+import Controller.SupplierCotroller;
+import DAO.*;
+import Model.Customer;
+import Model.InventoryLog;
+import Model.Product;
+import Model.Supplier;
+import Util.CustomCardGenerator;
 import Util.CustomTableGenerator;
+
 import com.formdev.flatlaf.FlatDarkLaf;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.event.ContainerEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
 
 public class MainWindow extends JFrame {
     private ConnectionMySQL connection;
+
+    //DAOs
+    private ProductDAO productDAO;
+    private CustomerDAO customerDAO;
+    private SupplierDAO supplierDAO;
+    private InventoryLogDAO inventoryLogDAO;
+
+    //Controllers
+    private ProductController productController;
+    private CustomerController customerController;
+    private SupplierCotroller  supplierController;
+    private InventoryLogController inventoryLogController;
+
 
     private JPanel mainPanel;
     private JPanel menuPanel;
@@ -29,6 +53,9 @@ public class MainWindow extends JFrame {
     private JPanel accessBtnPanel;
     private JScrollPane tablesContainer;
     private JButton btnSearch;
+    private JButton btnProducts;
+    private JButton btnSuppliers;
+    private JButton btnCustomers;
 
     public MainWindow() {
         setTitle("Sistema para Colmado");
@@ -45,179 +72,175 @@ public class MainWindow extends JFrame {
 
     private void initializeWindow() {
 
-        //Aqui agregaremos los controladores cuando los terminemos
+        // Inicializar DAOs
+        productDAO = new ProductDAO();
+        customerDAO = new CustomerDAO();
+        supplierDAO = new SupplierDAO();
+        inventoryLogDAO = new InventoryLogDAO();
 
+        // Inicializar Controladores
+        productController = new ProductController(productDAO);
+        customerController = new CustomerController(customerDAO);
+        supplierController = new SupplierCotroller(supplierDAO);
+        inventoryLogController = new InventoryLogController(inventoryLogDAO);
+
+        // Cargar Imágenes
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
         loadButtonImage(btnInventory, "/img/inventario.png", 35, 35);
         loadButtonImage(btnSearch, "/img/lupa.png", 30, 30);
         loadButtonImage(btnSell, "/img/ventas.png", 35, 35);
         loadButtonImage(btnOrders, "/img/pedidos.png", 35, 35);
+        loadButtonImage(btnProducts, "/img/producto.png", 35, 35);
+        loadButtonImage(btnSuppliers, "/img/proveedor.png", 35, 35);
+        loadButtonImage(btnCustomers, "/img/cliente.png", 35, 35);
 
+        // Eventos de Menú
         btnInventory.addActionListener(e -> selectMenu("inventory"));
         btnSell.addActionListener(e -> selectMenu("sell"));
         btnOrders.addActionListener(e -> selectMenu("orders"));
+        btnProducts.addActionListener(e -> selectMenu("products"));
+        btnSuppliers.addActionListener(e -> selectMenu("suppliers"));
+        btnCustomers.addActionListener(e -> selectMenu("customers"));
 
         selectMenu("inventory");
     }
 
     private void selectMenu(String option) {
-
         btnInventory.setSelected(false);
         btnSell.setSelected(false);
         btnOrders.setSelected(false);
+        btnProducts.setSelected(false);
+        btnSuppliers.setSelected(false);
+        btnCustomers.setSelected(false);
 
         switch (option) {
             case "inventory":
                 btnInventory.setSelected(true);
                 loadInventoryView();
                 break;
-
             case "sell":
                 btnSell.setSelected(true);
                 loadSellView();
                 break;
-
             case "orders":
                 btnOrders.setSelected(true);
                 loadOrdersView();
                 break;
+            case "products":
+                btnProducts.setSelected(true);
+                loadProductsView();
+                break;
+            case "suppliers":
+                btnSuppliers.setSelected(true);
+                loadSuppliersView();
+                break;
+            case "customers":
+                btnCustomers.setSelected(true);
+                loadCustomersView();
+                break;
         }
     }
 
-    private void loadInventoryView() {
 
-        String[] columns = {"ID", "Nombre", "Categoría", "Precio", "Stock", "Proveedor", "Fecha ingreso", "Acciones"};
-        Object[][] data = {
-                {1, "Arroz Cristal 5kg", "Alimentos", "$230.00", 20, "Proveedor A", "2023-01-22", ""},
-                {2, "Aceite 1L", "Bebidas", "$150.00", 12, "Proveedor B", "2023-01-20", ""},
-                {3, "Azúcar 2kg", "Alimentos", "$80.00", 4, "Proveedor C", "2023-01-01", ""},
-                {4, "Leche en polvo", "Lácteos", "$350.00", 8, "Proveedor D", "2023-01-22", ""}
-        };
+    private void loadInventoryView() {
+        String[] columns = {"ID LOG", "ID Producto", "Tipo", "Cantidad", "Fecha", "Acciones"};
+        List<InventoryLog> inventoryLogs = inventoryLogController.getAllLogs();
+
+        Object[][] data = new Object[inventoryLogs.size()][6];
+
+        for (int i = 0; i < inventoryLogs.size(); i++) {
+            InventoryLog log = inventoryLogs.get(i);
+            data[i][0] = log.getIdLog();
+            data[i][1] = log.getIdProduct();
+            data[i][2] = log.getMovementType();
+            data[i][3] = log.getQuantityChange();
+            data[i][4] = log.getMovementDate().toString();
+            data[i][5] = "";
+        }
 
         CustomTableGenerator inventoryTable = new CustomTableGenerator(
                 columns,
                 data,
-                e -> {
-                    int row = e.getID();
-                    int id = (int) data[row][0];
-                    String name = (String) data[row][1];
-
-                    UpdateWindow updateWindow = new UpdateWindow(columns);
-                    System.out.println("Editar producto ID: " + id);
-                    updateWindow.setVisible(true);
-                },
-                e -> {
-                    int row = e.getID();
-                    String name = (String) data[row][1];
-
-                    int confirm = JOptionPane.showConfirmDialog(
-                            this,
-                            "¿Eliminar " + name + "?",
-                            "Confirmar Eliminación",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE
-                    );
-
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        System.out.println("Producto eliminado ID: " + data[row][0]);
-                        JOptionPane.showMessageDialog(
-                                this,
-                                "Producto eliminado correctamente",
-                                "Eliminación Exitosa",
-                                JOptionPane.INFORMATION_MESSAGE
-                        );
-                    }
-                }
+                e -> { },
+                e -> { }
         );
 
         tablesContainer.setViewportView(inventoryTable.getTable());
-        openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "Precio", "Stock"});
+
+        openAddWindow(btnAdd, "Inventario", new String[]{"ID Producto", "Tipo de movimiento", "Cantidad"}, this::loadInventoryView);
+    }
+
+    private void loadProductsView() {
+        String[] columns = {"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"};
+        List<Product> products = productController.getAllProducts();
+
+        Object[][] data = new Object[products.size()][7];
+
+        for (int i = 0; i < products.size(); i++) {
+            data[i][0] = products.get(i).getId();
+            data[i][1] = products.get(i).getName();
+            data[i][2] = products.get(i).getCategory();
+            data[i][3] = products.get(i).getUnitPrice();
+            data[i][4] = products.get(i).getInventoryQuantity();
+            LocalDate date = products.get(i).getExpirationDate();
+            data[i][5] = (date != null) ? date.toString() : "N/A";
+            data[i][6] = "";
+        }
+
+        CustomTableGenerator productsTable = new CustomTableGenerator(
+                columns,
+                data,
+                e -> {
+
+                },
+                e -> {
+
+                }
+        );
+
+        tablesContainer.setViewportView(productsTable.getTable());
+
+        openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"}, this::loadProductsView);
+    }
+
+    private void loadSuppliersView() {
+        List<Supplier> suppliers = supplierController.getAllSuppliers();
+
+        CustomCardGenerator cards = new CustomCardGenerator(
+                suppliers,
+                e -> System.out.println("Editar ID: " + e.getID()),
+                e -> { /* Lógica eliminar */ }
+        );
+
+        tablesContainer.setViewportView(cards.getContainer());
+
+        openAddWindow(btnAdd, "Proveedor", new String[]{"Nombre", "Dirección", "Teléfono", "RNC"}, this::loadSuppliersView);
+    }
+
+    private void loadCustomersView() {
+        List<Customer> customers = customerController.getAllCustomers();
+
+        CustomCardGenerator cards = new CustomCardGenerator(
+                customers,
+                e -> System.out.println("Editar ID: " + e.getID()),
+                e -> System.out.println("Eliminar ID: " + e.getID())
+        );
+
+        tablesContainer.setViewportView(cards.getContainer());
+
+        openAddWindow(btnAdd, "Cliente", new String[]{"Nombre", "Dirección", "Teléfono", "Cédula"}, this::loadCustomersView);
     }
 
     private void loadSellView() {
-        String[] columns = {"ID", "Fecha", "Cliente", "Total", "Método Pago", "Acciones"};
-        Object[][] data = {
-                {1, "2023-01-22 10:30", "Juan Pérez", "$450.00", "Efectivo", ""},
-                {2, "2023-01-22 11:15", "María García", "$320.50", "Tarjeta de crédito", ""},
-                {3, "2023-01-22 14:20", "Pedro López", "$180.00", "Tarjeta de débito", ""},
-                {4, "2023-01-23 09:45", "Ana Rodríguez", "$520.75", "Efectivo", ""}
-        };
-
-        CustomTableGenerator sellTable = new CustomTableGenerator(
-                columns,
-                data,
-                e -> {
-                    int row = e.getID();
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Cliente: " + data[row][2] + "\n" +
-                                    "Fecha: " + data[row][1] + "\n" +
-                                    "Total: " + data[row][3] + "\n" +
-                                    "Método: " + data[row][4],
-                            "Detalles de Venta #" + data[row][0],
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-                },
-                e -> {
-                    int row = e.getID();
-                    int confirm = JOptionPane.showConfirmDialog(
-                            this,
-                            "¿Anular factura #" + data[row][0] + "?\n" +
-                                    "Cliente: " + data[row][2],
-                            "Confirmar Anulación",
-                            JOptionPane.YES_NO_OPTION
-                    );
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        System.out.println("Factura anulada ID: " + data[row][0]);
-                    }
-                }
-        );
-
-        tablesContainer.setViewportView(sellTable.getTable());
-        openAddWindow(btnAdd, "Nueva Venta", new String[]{"Cliente", "Productos", "Total"});
+        tablesContainer.setViewportView(new JPanel());
+        openAddWindow(btnAdd, "Nueva Venta", new String[]{"Cliente", "Productos", "Total", "Método Pago"}, () -> {});
     }
 
     private void loadOrdersView() {
-        String[] columns = {"ID", "Fecha", "Proveedor", "Total", "Estado", "Acciones"};
-        Object[][] data = {
-                {1, "2023-01-20", "Distribuidora Central", "$2,500.00", "Completado", ""},
-                {2, "2023-01-21", "Alimentos del Norte", "$1,800.50", "Completado", ""},
-                {3, "2023-01-22", "Productos Frescos SA", "$950.00", "Pendiente", ""},
-                {4, "2023-01-23", "Bebidas Express", "$1,200.00", "En proceso", ""}
-        };
-
-        CustomTableGenerator ordersTable = new CustomTableGenerator(
-                columns,
-                data,
-                e -> {
-                    int row = e.getID();
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Proveedor: " + data[row][2] + "\n" +
-                                    "Fecha: " + data[row][1] + "\n" +
-                                    "Total: " + data[row][3] + "\n" +
-                                    "Estado: " + data[row][4],
-                            "Detalles Pedido #" + data[row][0],
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
-                },
-                e -> {
-                    int row = e.getID();
-                    int confirm = JOptionPane.showConfirmDialog(
-                            this,
-                            "¿Cancelar pedido #" + data[row][0] + "?",
-                            "Confirmar Cancelación",
-                            JOptionPane.YES_NO_OPTION
-                    );
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        System.out.println("Pedido cancelado ID: " + data[row][0]);
-                    }
-                }
-        );
-
-        tablesContainer.setViewportView(ordersTable.getTable());
-        openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"});
+        tablesContainer.setViewportView(new JPanel());
+        openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"}, () -> {});
     }
+
 
     private void loadLabelImage(JLabel label, String path, int width, int height) {
         try {
@@ -234,7 +257,6 @@ public class MainWindow extends JFrame {
             ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
             Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
             button.setIcon(new ImageIcon(scaled));
-
             button.setHorizontalTextPosition(SwingConstants.RIGHT);
             button.setIconTextGap(10);
             button.setBorderPainted(false);
@@ -243,7 +265,7 @@ public class MainWindow extends JFrame {
         }
     }
 
-    private void openAddWindow(JButton button, String title, String[] labels) {
+    private void openAddWindow(JButton button, String title, String[] labels, Runnable onWindowClosed) {
         for (ActionListener l : button.getActionListeners()) {
             button.removeActionListener(l);
         }
@@ -256,6 +278,9 @@ public class MainWindow extends JFrame {
                 @Override
                 public void windowClosed(WindowEvent e) {
                     button.setEnabled(true);
+                    if (onWindowClosed != null) {
+                        onWindowClosed.run();
+                    }
                 }
             });
         });
