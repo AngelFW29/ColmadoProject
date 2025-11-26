@@ -66,6 +66,34 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         return null;
     }
 
+    @Override
+    public boolean update(Invoice invoice) {
+        String sql = "UPDATE Invoice SET id_person = ?, total = ?, payment_method = ? WHERE id_invoice = ?";
+        try {
+            int rows = conexion.executeUpdate(sql,
+                    invoice.getCustomer().getId(),
+                    invoice.getTotal(),
+                    invoice.getPaymentMethod(),
+                    invoice.getIdInvoice()
+            );
+            return rows > 0;
+        } catch (SQLException e) {
+            System.out.println("Error updating invoice: " + e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean delete(int id) {
+        String sql = "DELETE FROM Invoice WHERE id_invoice = ?";
+        try {
+            int rows = conexion.executeUpdate(sql, id);
+            return rows > 0;
+        } catch (SQLException e) {
+            System.out.println("Error deleting invoice: " + e.getMessage());
+            return false;
+        }
+    }
 
     @Override
     public List<Invoice> findAll() {
@@ -94,34 +122,5 @@ public class InvoiceDAO implements ICRUD<Invoice> {
             System.out.println("Error retrieving invoices: " + e.getMessage());
         }
         return invoices;
-    }
-
-    @Override
-    public boolean update(Invoice invoice) {
-        String sql = "UPDATE Invoice SET id_person = ?, total = ?, payment_method = ? WHERE id_invoice = ?";
-        try {
-            int rows = conexion.executeUpdate(sql,
-                    invoice.getCustomer().getId(),
-                    invoice.getTotal(),
-                    invoice.getPaymentMethod(),
-                    invoice.getIdInvoice()
-            );
-            return rows > 0;
-        } catch (SQLException e) {
-            System.out.println("Error updating invoice: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public boolean delete(int id) {
-        String sql = "DELETE FROM Invoice WHERE id_invoice = ?";
-        try {
-            int rows = conexion.executeUpdate(sql, id);
-            return rows > 0;
-        } catch (SQLException e) {
-            System.out.println("Error deleting invoice: " + e.getMessage());
-            return false;
-        }
     }
 }

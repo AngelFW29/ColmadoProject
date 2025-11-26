@@ -18,16 +18,16 @@ public class InvoiceController {
         return new Invoice(customer, paymentMethod);
     }
 
-    // Calculate final total
-    public double calculateTotal(Invoice invoice) {
-        return invoice.calculateTotal();
-    }
-
     // Save invoice
     public boolean saveInvoice(Invoice invoice) {
         invoice.calculateTotal();
 
         return invoiceDAO.create(invoice);
+    }
+
+    // Calculate final total
+    public double calculateTotal(Invoice invoice) {
+        return invoice.calculateTotal();
     }
 
     // Read invoice

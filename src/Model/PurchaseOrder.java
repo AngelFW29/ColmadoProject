@@ -9,7 +9,7 @@ public class PurchaseOrder {
     private Supplier supplier;
     private LocalDateTime orderDate;
     private PurchaseOrderStatus status;
-    private List<PurchaseOrderDetail> details = new ArrayList<>();
+    private List<PurchaseOrderDetails> details = new ArrayList<>();
 
     public PurchaseOrder() {}
 
@@ -22,7 +22,7 @@ public class PurchaseOrder {
 
     public double getTotal() {
         return details.stream()
-                .mapToDouble(PurchaseOrderDetail::getSubTotal)
+                .mapToDouble(PurchaseOrderDetails::getSubTotal)
                 .sum();
     }
 
@@ -58,11 +58,11 @@ public class PurchaseOrder {
         this.status = status;
     }
 
-    public List<PurchaseOrderDetail> getDetails() {
+    public List<PurchaseOrderDetails> getDetails() {
         return details;
     }
 
-    public void setDetails(List<PurchaseOrderDetail> details) {
+    public void setDetails(List<PurchaseOrderDetails> details) {
         this.details = details;
     }
 }
