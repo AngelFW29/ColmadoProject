@@ -1,7 +1,7 @@
 package DAO;
 
 import Model.PurchaseOrder;
-import Model.PurchaseOrderDetail; // <--- Importante
+import Model.PurchaseOrderDetails;
 import Model.PurchaseOrderStatus;
 import Model.Supplier;
 
@@ -13,12 +13,12 @@ import java.util.List;
 public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
     private final ConnectionMySQL CONNECTION;
     private final SupplierDAO supplierDAO;
-    private final PurchaseOrderDetailDAO detailDAO;
+    private final PurchaseOrderDetailsDAO detailDAO;
 
     public PurchaseOrderDAO(ConnectionMySQL CONNECTION) {
         this.CONNECTION = CONNECTION;
         this.supplierDAO = new SupplierDAO();
-        this.detailDAO = new PurchaseOrderDetailDAO();
+        this.detailDAO = new PurchaseOrderDetailsDAO();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
                         status
                 );
 
-                List<PurchaseOrderDetail> details = detailDAO.findAllByOrderId(id);
+                List<PurchaseOrderDetails> details = detailDAO.findAllByOrderId(id);
                 po.setDetails(details);
 
                 return po;

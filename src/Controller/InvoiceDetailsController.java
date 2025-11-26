@@ -45,7 +45,6 @@ public class InvoiceDetailsController {
             invoice.calculateTotal();
             return invoiceDAO.update(invoice);
         }
-
         return true;
     }
 

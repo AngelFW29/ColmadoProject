@@ -1,15 +1,16 @@
 package Model;
 
-public class PurchaseOrderDetail {
+public class PurchaseOrderDetails {
     private int idPurchaseOrderDetail;
     private PurchaseOrder purchaseOrder;
     private Product product;
     private int quantity;
     private double unitCost;
 
-    public PurchaseOrderDetail() {}
+    public PurchaseOrderDetails() {
+    }
 
-    public PurchaseOrderDetail(Product product, int quantity, double unitCost) {
+    public PurchaseOrderDetails(Product product, int quantity, double unitCost) {
         this.product = product;
         this.quantity = quantity;
         this.unitCost = unitCost;

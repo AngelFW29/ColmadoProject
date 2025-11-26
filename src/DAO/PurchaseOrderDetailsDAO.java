@@ -2,25 +2,25 @@ package DAO;
 
 import Model.Product;
 import Model.PurchaseOrder;
-import Model.PurchaseOrderDetail;
+import Model.PurchaseOrderDetails;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PurchaseOrderDetailDAO implements ICRUD<PurchaseOrderDetail> {
+public class PurchaseOrderDetailsDAO implements ICRUD<PurchaseOrderDetails> {
 
     private final ConnectionMySQL CONNECTION;
     private final ProductDAO productDAO;
 
-    public PurchaseOrderDetailDAO() {
+    public PurchaseOrderDetailsDAO() {
         this.CONNECTION = ConnectionMySQL.getInstance();
         this.productDAO = new ProductDAO();
     }
 
     @Override
-    public boolean create(PurchaseOrderDetail entity) {
+    public boolean create(PurchaseOrderDetails entity) {
         String query = "INSERT INTO PurchaseOrderDetail(id_purchase_order, id_product, quantity, unit_cost, sub_total) VALUES (?, ?, ?, ?, ?)";
 
         try {
@@ -41,7 +41,7 @@ public class PurchaseOrderDetailDAO implements ICRUD<PurchaseOrderDetail> {
     }
 
     @Override
-    public PurchaseOrderDetail read(int id) {
+    public PurchaseOrderDetails read(int id) {
         String query = "SELECT * FROM PurchaseOrderDetail WHERE id_purchase_detail = ?";
 
         try (ResultSet rs = CONNECTION.executeQuery(query, id)) {
@@ -55,7 +55,7 @@ public class PurchaseOrderDetailDAO implements ICRUD<PurchaseOrderDetail> {
     }
 
     @Override
-    public boolean update(PurchaseOrderDetail entity) {
+    public boolean update(PurchaseOrderDetails entity) {
         String query = "UPDATE PurchaseOrderDetail SET id_product = ?, quantity = ?, unit_cost = ?, sub_total = ? WHERE id_purchase_detail = ?";
 
         try {
@@ -87,8 +87,8 @@ public class PurchaseOrderDetailDAO implements ICRUD<PurchaseOrderDetail> {
     }
 
     @Override
-    public List<PurchaseOrderDetail> findAll() {
-        List<PurchaseOrderDetail> details = new ArrayList<>();
+    public List<PurchaseOrderDetails> findAll() {
+        List<PurchaseOrderDetails> details = new ArrayList<>();
         String query = "SELECT * FROM PurchaseOrderDetail";
 
         try (ResultSet rs = CONNECTION.executeQuery(query)) {
@@ -101,9 +101,8 @@ public class PurchaseOrderDetailDAO implements ICRUD<PurchaseOrderDetail> {
         return details;
     }
 
-
-    public List<PurchaseOrderDetail> findAllByOrderId(int orderId) {
-        List<PurchaseOrderDetail> details = new ArrayList<>();
+    public List<PurchaseOrderDetails> findAllByOrderId(int orderId) {
+        List<PurchaseOrderDetails> details = new ArrayList<>();
         String query = "SELECT * FROM PurchaseOrderDetail WHERE id_purchase_order = ?";
 
         try (ResultSet rs = CONNECTION.executeQuery(query, orderId)) {
@@ -116,10 +115,10 @@ public class PurchaseOrderDetailDAO implements ICRUD<PurchaseOrderDetail> {
         return details;
     }
 
-    private PurchaseOrderDetail mapResultSetToEntity(ResultSet rs) throws SQLException {
+    private PurchaseOrderDetails mapResultSetToEntity(ResultSet rs) throws SQLException {
         Product product = productDAO.read(rs.getInt("id_product"));
 
-        PurchaseOrderDetail detail = new PurchaseOrderDetail(
+        PurchaseOrderDetails detail = new PurchaseOrderDetails(
                 product,
                 rs.getInt("quantity"),
                 rs.getDouble("unit_cost")
