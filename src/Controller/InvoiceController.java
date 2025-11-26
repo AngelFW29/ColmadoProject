@@ -40,4 +40,8 @@ public class InvoiceController {
         return invoiceDAO.findAll();
     }
 
+    // Returns today's total sales
+    public double getTodaySales(){
+        return invoiceDAO.TodaySales();
+    }
 }

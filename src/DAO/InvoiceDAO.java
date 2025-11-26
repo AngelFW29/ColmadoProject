@@ -123,4 +123,14 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         }
         return invoices;
     }
+
+    public double TodaySales() {
+        String sql = "SELECT SUM(total) AS Ventas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
+        try (ResultSet rs = conexion.executeQuery(sql)) {
+            if (rs.next()) return rs.getDouble("Ventas_hoy");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0.0;
+    }
+
+
 }

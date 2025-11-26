@@ -44,4 +44,13 @@ public class ProductController {
     public List<Product> getLowStockProducts() {
         return productDAO.findLowStock();
     }
+
+    // Total number of products
+    public int getTotalProducts() {
+        return productDAO.countProducts();
+    }
+    // Number of products with low stock
+    public int getLowStockCount() {
+        return productDAO.countLowStock();
+    }
 }

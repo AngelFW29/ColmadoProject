@@ -127,4 +127,27 @@ public class ProductDAO implements ICRUD<Product> {
                 localDate
         );
     }
+
+
+    public int countProducts() {
+        String sql = "SELECT COUNT(id_product) AS Total FROM Product";
+        try (ResultSet rs = conexion.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("Total");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int countLowStock() {
+        String sql = "SELECT COUNT(*) AS Stock_Bajo FROM Product WHERE current_stock <=5";
+        try (ResultSet rs = conexion.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("Stock_Bajo");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+
 }
