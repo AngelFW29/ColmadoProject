@@ -3,6 +3,7 @@ package DAO;
 import Model.Product;
 
 import java.sql.Date;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -128,7 +129,6 @@ public class ProductDAO implements ICRUD<Product> {
         );
     }
 
-
     public int countProducts() {
         String sql = "SELECT COUNT(id_product) AS Total FROM Product";
         try (ResultSet rs = conexion.executeQuery(sql)) {
@@ -149,5 +149,24 @@ public class ProductDAO implements ICRUD<Product> {
         return 0;
     }
 
+    public List<Product> searchProducts(String filter) {
+        List<Product> products = new ArrayList<>();
+        String sql = """ 
+                SELECT * FROM Product 
+                WHERE name LIKE ?
+                OR CAST(id_product AS CHAR) LIKE ?
+                OR CAST(id_category AS CHAR) LIKE ?
+                """;
+        String text = "%" + filter + "%";
+
+        try (ResultSet rs = conexion.executeQuery(sql, text, text, text)) {
+            while (rs.next()) {
+                products.add(mapResultSetToProduct(rs));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return products;
+    }
 
 }

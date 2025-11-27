@@ -11,6 +11,7 @@ import Model.Product;
 import Model.Supplier;
 import Util.CustomCardGenerator;
 import Util.CustomTableGenerator;
+import Util.RowMapper;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 
@@ -35,7 +36,7 @@ public class MainWindow extends JFrame {
     //Controllers
     private ProductController productController;
     private CustomerController customerController;
-    private SupplierCotroller  supplierController;
+    private SupplierCotroller supplierController;
     private InventoryLogController inventoryLogController;
 
 
@@ -101,8 +102,10 @@ public class MainWindow extends JFrame {
         btnProducts.addActionListener(e -> selectMenu("products"));
         btnSuppliers.addActionListener(e -> selectMenu("suppliers"));
         btnCustomers.addActionListener(e -> selectMenu("customers"));
-
         selectMenu("inventory");
+        //Test
+        btnSearch.addActionListener(e -> loadProductsView());
+
     }
 
     private void selectMenu(String option) {
@@ -161,8 +164,10 @@ public class MainWindow extends JFrame {
         CustomTableGenerator inventoryTable = new CustomTableGenerator(
                 columns,
                 data,
-                e -> { },
-                e -> { }
+                e -> {
+                },
+                e -> {
+                }
         );
 
         tablesContainer.setViewportView(inventoryTable.getTable());
@@ -171,35 +176,24 @@ public class MainWindow extends JFrame {
     }
 
     private void loadProductsView() {
-        String[] columns = {"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"};
-        List<Product> products = productController.getAllProducts();
+        String text = searchTextField.getText().trim();
+        List<Product> products = text.isEmpty()
+                ? productController.getAllProducts()
+                : productController.getSearchProducts(text);
 
         Object[][] data = new Object[products.size()][7];
 
-        for (int i = 0; i < products.size(); i++) {
-            data[i][0] = products.get(i).getId();
-            data[i][1] = products.get(i).getName();
-            data[i][2] = products.get(i).getCategory();
-            data[i][3] = products.get(i).getUnitPrice();
-            data[i][4] = products.get(i).getInventoryQuantity();
-            LocalDate date = products.get(i).getExpirationDate();
-            data[i][5] = (date != null) ? date.toString() : "N/A";
-            data[i][6] = "";
-        }
-
-        CustomTableGenerator productsTable = new CustomTableGenerator(
-                columns,
-                data,
-                e -> {
-
-                },
-                e -> {
-
-                }
-        );
-
-        tablesContainer.setViewportView(productsTable.getTable());
-
+        updateTable(tablesContainer, products,
+                new String[]{"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"},
+                p -> new Object[]{
+                        p.getId(),
+                        p.getName(),
+                        p.getCategory(),
+                        p.getUnitPrice(),
+                        p.getInventoryQuantity(),
+                        p.getExpirationDate() != null ? p.getExpirationDate().toString() : "N/A",
+                        ""
+                });
         openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"}, this::loadProductsView);
     }
 
@@ -233,14 +227,15 @@ public class MainWindow extends JFrame {
 
     private void loadSellView() {
         tablesContainer.setViewportView(new JPanel());
-        openAddWindow(btnAdd, "Nueva Venta", new String[]{"Cliente", "Productos", "Total", "Método Pago"}, () -> {});
+        openAddWindow(btnAdd, "Nueva Venta", new String[]{"Cliente", "Productos", "Total", "Método Pago"}, () -> {
+        });
     }
 
     private void loadOrdersView() {
         tablesContainer.setViewportView(new JPanel());
-        openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"}, () -> {});
+        openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"}, () -> {
+        });
     }
-
 
     private void loadLabelImage(JLabel label, String path, int width, int height) {
         try {
@@ -285,6 +280,26 @@ public class MainWindow extends JFrame {
             });
         });
     }
+
+    private <U> void updateTable(JScrollPane container, List<U> items, String[] columns, RowMapper<U> mapper) {
+        Object[][] data = new Object[items.size()][columns.length];
+
+        for (int i = 0; i < items.size(); i++) {
+            data[i] = mapper.map(items.get(i));
+        }
+
+        CustomTableGenerator table = new CustomTableGenerator(
+                columns,
+                data,
+                e -> {
+                },
+                e -> {
+                }
+        );
+
+        container.setViewportView(table.getTable());
+    }
+
 }
 
 class ProgramExecute {
