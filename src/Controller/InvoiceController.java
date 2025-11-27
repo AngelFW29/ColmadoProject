@@ -17,6 +17,10 @@ public class InvoiceController {
     public Invoice createInvoice(Customer customer, PaymentMethod paymentMethod) {
         return new Invoice(customer, paymentMethod);
     }
+    public boolean deleteInvoice(int id) {
+        return invoiceDAO.delete(id);
+    }
+
 
     public boolean saveInvoice(Invoice invoice) {
         invoice.calculateTotal();

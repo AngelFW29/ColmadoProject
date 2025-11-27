@@ -6,15 +6,14 @@ import Model.*;
 import Util.CustomCardGenerator;
 import Util.CustomTableGenerator;
 import Util.StatsCard;
-import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
+import View.SalesDialog;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
@@ -46,7 +45,7 @@ public class MainWindow extends JFrame {
     private JPanel topPanel;
     private JLabel logoAppLabel;
     private JButton btnOrders;
-    private JButton btnSell;
+    private JButton btnSales;
     private JButton btnInventory;
     private JPanel accessBtnPanel;
     private JScrollPane tablesContainer;
@@ -89,7 +88,7 @@ public class MainWindow extends JFrame {
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
         loadButtonImage(btnInventory, "/img/inventario.png", 35, 35);
         loadButtonImage(btnSearch, "/img/lupa.png", 30, 30);
-        loadButtonImage(btnSell, "/img/ventas.png", 35, 35);
+        loadButtonImage(btnSales, "/img/ventas.png", 35, 35);
         loadButtonImage(btnOrders, "/img/pedidos.png", 35, 35);
         loadButtonImage(btnProducts, "/img/producto.png", 35, 35);
         loadButtonImage(btnSuppliers, "/img/proveedor.png", 35, 35);
@@ -97,7 +96,7 @@ public class MainWindow extends JFrame {
 
         // Listeners de Navegación
         btnInventory.addActionListener(e -> selectMenu("inventory"));
-        btnSell.addActionListener(e -> selectMenu("sell"));
+        btnSales.addActionListener(e -> selectMenu("sell"));
         btnOrders.addActionListener(e -> selectMenu("orders"));
         btnProducts.addActionListener(e -> selectMenu("products"));
         btnSuppliers.addActionListener(e -> selectMenu("suppliers"));
@@ -108,11 +107,19 @@ public class MainWindow extends JFrame {
 
     private void selectMenu(String option) {
         btnInventory.setSelected(false);
-        btnSell.setSelected(false);
+        btnSales.setSelected(false);
         btnOrders.setSelected(false);
         btnProducts.setSelected(false);
         btnSuppliers.setSelected(false);
         btnCustomers.setSelected(false);
+
+        int total = productController.getAllProducts().size();
+        int lowStock = productDAO.findLowStock().size();
+        Double totalSales = invoiceController.getTodaySales();
+
+        updateStatPanel(firstStatsPanel, "Total Productos", String.valueOf(total));
+        updateStatPanel(secondStatsPanel, "Stock Bajo", String.valueOf(lowStock));
+        updateStatPanel(thirdStatsPanel, "Ventas Hoy", "$" + totalSales.toString());
 
         switch (option) {
             case "inventory":
@@ -120,7 +127,7 @@ public class MainWindow extends JFrame {
                 loadInventoryView();
                 break;
             case "sell":
-                btnSell.setSelected(true);
+                btnSales.setSelected(true);
                 loadSellView();
                 break;
             case "orders":
@@ -181,12 +188,6 @@ public class MainWindow extends JFrame {
 
         tablesContainer.setViewportView(table.getTable());
 
-        // Actualizar Stats
-        int total = productController.getAllProducts().size();
-        int lowStock = productDAO.findLowStock().size();
-        updateStatPanel(firstStatsPanel, "Total Productos", String.valueOf(total));
-        updateStatPanel(secondStatsPanel, "Stock Bajo", String.valueOf(lowStock));
-        updateStatPanel(thirdStatsPanel, "Ventas Hoy", "$0.00");
 
         openAddWindow(btnAdd, "Inventario", new String[]{"ID Producto", "Tipo de movimiento", "Cantidad"}, this::loadInventoryView);
     }
@@ -279,7 +280,17 @@ public class MainWindow extends JFrame {
     }
 
     private void loadSellView() {
-        openAddWindow(btnAdd, "Nueva Venta", new String[]{"ID Persona", "Total", "Método Pago"}, () -> {});
+        for (java.awt.event.ActionListener l : btnAdd.getActionListeners()) {
+            btnAdd.removeActionListener(l);
+        }
+
+        btnAdd.addActionListener(e -> {
+            SalesDialog dialog = new SalesDialog(this); // 'this' es MainWindow
+            dialog.setVisible(true);
+
+            loadSellView();
+        });
+
         String[] columns = {"ID Factura", "Fecha", "ID Persona", "Total", "Metodo Pago", "Acciones"};
 
         List<Invoice> invoices = invoiceController.getAllInvoices();
@@ -297,8 +308,23 @@ public class MainWindow extends JFrame {
 
         CustomTableGenerator table = new CustomTableGenerator(
                 columns, data,
-                e -> { /* Ver */ },
-                e -> { /* Eliminar */ }
+                e -> { // Editar
+                    int row = e.getID();
+                    int idLog = (int) data[row][0];
+                    String[] values = {
+                            String.valueOf(data[row][1]),
+                            String.valueOf(data[row][2]),
+                            String.valueOf(data[row][3]),
+                            String.valueOf(data[row][4]),
+                    };
+                    String[] labels = {"ID Producto", "Tipo de movimiento", "Cantidad"};
+                    openUpdateDialog("Ventas", labels, values, idLog, this::loadSellView);
+                },
+                e -> { // Eliminar
+                    int row = e.getID();
+                    int idInvoice = (int) data[row][0];
+                    confirmAndDelete("Log #" + idInvoice, () -> invoiceController.deleteInvoice(idInvoice), this::loadSellView);
+                }
         );
         tablesContainer.setViewportView(table.getTable());
     }

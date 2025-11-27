@@ -10,16 +10,6 @@ public class InvoiceDetails implements ISubTotal {
     private double unitPrice;
     private double subtTotal;
 
-    public InvoiceDetails(int id, Invoice invoice, Product product, int quantity, double unitPrice, double subtTotal) {
-        this.id = id;
-        this.invoice = invoice;
-        this.product = product;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.subtTotal = subtTotal;
-    }
-
-
     public InvoiceDetails(Invoice invoice, Product product, int quantity, double unitPrice) {
         this.id = 0;
         this.invoice = invoice;

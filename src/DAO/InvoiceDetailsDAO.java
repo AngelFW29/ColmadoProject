@@ -21,7 +21,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
 
     @Override
     public boolean create(InvoiceDetails entity) {
-        String query = "INSERT INTO InvoiceDetails (id_invoice, id_product, quantity, unit_price, sub_total) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO InvoiceDetail (id_invoice, id_product, quantity, unit_price, sub_total) VALUES (?, ?, ?, ?, ?)";
 
         try {
             double subTotalCalculated = entity.getSubtTotal();
@@ -42,7 +42,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
 
     @Override
     public InvoiceDetails read(int id) {
-        String query = "SELECT * FROM InvoiceDetails WHERE id_invoice_detail = ?";
+        String query = "SELECT * FROM InvoiceDetail WHERE id_invoice_detail = ?";
 
         try (ResultSet rs = CONNECTION.executeQuery(query, id)) {
             if (rs.next()) {
@@ -57,7 +57,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
 
     @Override
     public boolean update(InvoiceDetails entity) {
-        String query = "UPDATE InvoiceDetails SET id_product = ?, quantity = ?, unit_price = ?, sub_total = ? WHERE id_invoice_detail = ?";
+        String query = "UPDATE InvoiceDetail SET id_product = ?, quantity = ?, unit_price = ?, sub_total = ? WHERE id_invoice_detail = ?";
 
         try {
             double subTotalCalculated = entity.getSubtTotal();
@@ -78,7 +78,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
 
     @Override
     public boolean delete(int id) {
-        String query = "DELETE FROM InvoiceDetails WHERE id_invoice_detail = ?";
+        String query = "DELETE FROM InvoiceDetail WHERE id_invoice_detail = ?";
 
         try {
             int rows = CONNECTION.executeUpdate(query, id);
@@ -91,7 +91,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
     @Override
     public List<InvoiceDetails> findAll() {
         List<InvoiceDetails> list = new ArrayList<>();
-        String query = "SELECT * FROM InvoiceDetails";
+        String query = "SELECT * FROM InvoiceDetail";
 
         try (ResultSet rs = CONNECTION.executeQuery(query)) {
             while (rs.next()) {
@@ -106,7 +106,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
 
     public List<InvoiceDetails> findAllByInvoiceId(int invoiceId) {
         List<InvoiceDetails> list = new ArrayList<>();
-        String query = "SELECT * FROM InvoiceDetails WHERE id_invoice = ?";
+        String query = "SELECT * FROM InvoiceDetail WHERE id_invoice = ?";
 
         try (ResultSet rs = CONNECTION.executeQuery(query, invoiceId)) {
             while (rs.next()) {

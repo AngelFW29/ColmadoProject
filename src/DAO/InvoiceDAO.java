@@ -13,31 +13,29 @@ import java.util.List;
 
 public class InvoiceDAO implements ICRUD<Invoice> {
 
-    private final ConnectionMySQL conexion;
+    private final ConnectionMySQL CONNECTION;
     private final InvoiceDetailsDAO invoiceDetailsDAO;
 
     public InvoiceDAO(InvoiceDetailsDAO invoiceDetailsDAO) {
-        this.conexion = ConnectionMySQL.getInstance();
+        this.CONNECTION = ConnectionMySQL.getInstance();
         this.invoiceDetailsDAO = invoiceDetailsDAO;
     }
 
     @Override
-    public boolean create(Invoice invoice) {
-        String sql = "INSERT INTO Invoice (created_at, id_person, total, payment_method) VALUES (?, ?, ?, ?)";
+    public boolean create(Invoice entity) {
+        String query = "INSERT INTO Invoice(id_person, total, payment_method) VALUES (?, ?, ?)";
+
         try {
-            Timestamp sqlDate = Timestamp.valueOf(invoice.getDateTime());
-
-            String paymentMethodStr = invoice.getPaymentMethod().name();
-
-            int rows = conexion.executeUpdate(sql,
-                    sqlDate,
-                    invoice.getCustomer().getId(),
-                    invoice.getTotal(),
-                    paymentMethodStr
+            int rows = CONNECTION.executeUpdate(query,
+                    entity.getCustomer().getId(),
+                    entity.getTotal(),
+                    entity.getPaymentMethod().getDisplayName()
             );
             return rows > 0;
         } catch (SQLException e) {
+            // Imprimimos el error para ver qué valor falló
             System.err.println("Error creating invoice: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -45,7 +43,7 @@ public class InvoiceDAO implements ICRUD<Invoice> {
     @Override
     public Invoice read(int id) {
         String sql = "SELECT * FROM Invoice WHERE id_invoice = ?";
-        try (ResultSet rs = conexion.executeQuery(sql, id)) {
+        try (ResultSet rs = CONNECTION.executeQuery(sql, id)) {
             if (rs.next()) {
                 return mapResultSetToInvoice(rs);
             }
@@ -59,7 +57,7 @@ public class InvoiceDAO implements ICRUD<Invoice> {
     public boolean update(Invoice invoice) {
         String sql = "UPDATE Invoice SET id_person = ?, total = ?, payment_method = ? WHERE id_invoice = ?";
         try {
-            int rows = conexion.executeUpdate(sql,
+            int rows = CONNECTION.executeUpdate(sql,
                     invoice.getCustomer().getId(),
                     invoice.getTotal(),
                     invoice.getPaymentMethod().name(),
@@ -76,7 +74,7 @@ public class InvoiceDAO implements ICRUD<Invoice> {
     public boolean delete(int id) {
         String sql = "DELETE FROM Invoice WHERE id_invoice = ?";
         try {
-            int rows = conexion.executeUpdate(sql, id);
+            int rows = CONNECTION.executeUpdate(sql, id);
             return rows > 0;
         } catch (SQLException e) {
             System.err.println("Error deleting invoice: " + e.getMessage());
@@ -88,7 +86,7 @@ public class InvoiceDAO implements ICRUD<Invoice> {
     public List<Invoice> findAll() {
         List<Invoice> invoices = new ArrayList<>();
         String sql = "SELECT * FROM Invoice";
-        try (ResultSet rs = conexion.executeQuery(sql)) {
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
             while (rs.next()) {
                 invoices.add(mapResultSetToInvoice(rs));
             }
@@ -100,7 +98,7 @@ public class InvoiceDAO implements ICRUD<Invoice> {
 
     public double getTodaySales() {
         String sql = "SELECT SUM(total) AS Ventas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
-        try (ResultSet rs = conexion.executeQuery(sql)) {
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
             if (rs.next()) {
                 double total = rs.getDouble("Ventas_hoy");
                 return rs.wasNull() ? 0.0 : total;
@@ -146,5 +144,17 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         }
 
         return invoice;
+    }
+
+    public int getLastInsertedId() {
+        String sql = "SELECT MAX(id_invoice) AS last_id FROM Invoice";
+        try (java.sql.ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt("last_id");
+            }
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 }
