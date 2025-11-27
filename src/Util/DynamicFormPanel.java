@@ -28,6 +28,7 @@ public class DynamicFormPanel extends JPanel {
 
             JComponent inputComponent;
 
+            // Detección de Fechas
             if (label.contains("Fecha") || label.contains("Date")) {
                 JDateChooser dateChooser = new JDateChooser();
                 dateChooser.setDateFormatString("yyyy-MM-dd");
@@ -35,6 +36,7 @@ public class DynamicFormPanel extends JPanel {
                 dateChooser.setPreferredSize(new Dimension(180, 25));
                 inputComponent = dateChooser;
             }
+            // Detección de Enums (ComboBox)
             else if (isEnumLabel(label)) {
                 JComboBox<String> comboBox = new JComboBox<>();
                 String[] options = getEnumOptions(label);
@@ -46,6 +48,7 @@ public class DynamicFormPanel extends JPanel {
                 comboBox.setPreferredSize(new Dimension(180, 25));
                 inputComponent = comboBox;
             }
+            // Texto Normal
             else {
                 inputComponent = new JTextField(15);
                 inputComponent.setPreferredSize(new Dimension(180, 25));
@@ -65,7 +68,8 @@ public class DynamicFormPanel extends JPanel {
     private boolean isEnumLabel(String label) {
         return label.equals("Tipo de movimiento") ||
                 label.equals("Método Pago") ||
-                label.equals("Estado");
+                label.equals("Estado") ||
+                label.equals("Tipo Persona");
     }
 
     private String[] getEnumOptions(String label) {
@@ -114,5 +118,37 @@ public class DynamicFormPanel extends JPanel {
             data.put(key, value);
         }
         return data;
+    }
+
+    public void setFormValues(String[] labels, String[] values) {
+        if (labels == null || values == null || labels.length != values.length) {
+            return;
+        }
+
+        for (int i = 0; i < labels.length; i++) {
+            String key = labels[i];
+            String value = values[i];
+
+            JComponent comp = fields.get(key);
+
+            if (comp != null) {
+                if (comp instanceof JTextField) {
+                    ((JTextField) comp).setText(value);
+                }
+                else if (comp instanceof JComboBox) {
+                    ((JComboBox<?>) comp).setSelectedItem(value);
+                }
+                else if (comp instanceof JDateChooser) {
+                    try {
+                        if (value != null && !value.isEmpty() && !value.equals("N/A")) {
+                            java.sql.Date date = java.sql.Date.valueOf(value);
+                            ((JDateChooser) comp).setDate(date);
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error al parsear fecha en setFormValues: " + value);
+                    }
+                }
+            }
+        }
     }
 }

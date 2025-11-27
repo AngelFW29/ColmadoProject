@@ -19,7 +19,7 @@ public class InvoiceDetailsController {
         if (invoice == null || product == null) throw new IllegalArgumentException
                 ("Invoice and Product are required.");
 
-        if (invoice.getIdInvoice() == 0) {
+        if (invoice.getId() == 0) {
             boolean created = invoiceDAO.create(invoice);
             if (!created) return false;
         }

@@ -76,6 +76,21 @@ public class InventoryLogDAO implements ICRUD<InventoryLog> {
         );
     }
 
-    @Override public boolean update(InventoryLog entity) { return false; }
-    @Override public boolean delete(int id) { return false; }
+    @Override
+    public boolean update(InventoryLog entity) {
+        String query = "UPDATE InventoryLog SET id_product = ?, movement_type = ?, quantity_change = ?, movement_date = ? WHERE id_log = ?";
+
+        try {
+            int rows = CONNECTION.executeUpdate(query,
+                    entity.getIdProduct(),
+                    entity.getMovementType().name(),
+                    entity.getQuantityChange(),
+                    entity.getMovementDate(),
+                    entity.getIdLog()
+            );
+            return rows > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al actualizar el log de inventario: " + e.getMessage(), e);
+        }
+    }    @Override public boolean delete(int id) { return false; }
 }

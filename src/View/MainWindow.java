@@ -1,19 +1,13 @@
 package View;
 
-import Controller.CustomerController;
-import Controller.InventoryLogController;
-import Controller.ProductController;
-import Controller.SupplierCotroller;
+import Controller.*;
 import DAO.*;
-import Model.Customer;
-import Model.InventoryLog;
-import Model.Product;
-import Model.Supplier;
+import Model.*;
 import Util.CustomCardGenerator;
 import Util.CustomTableGenerator;
-import Util.RowMapper;
-
+import Util.StatsCard;
 import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,23 +17,26 @@ import java.awt.event.WindowEvent;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 
 public class MainWindow extends JFrame {
-    private ConnectionMySQL connection;
 
-    //DAOs
+    // --- DAOs ---
     private ProductDAO productDAO;
     private CustomerDAO customerDAO;
     private SupplierDAO supplierDAO;
     private InventoryLogDAO inventoryLogDAO;
+    private InvoiceDAO invoiceDAO;
+    private InvoiceDetailsDAO invoiceDetailsDAO;
 
-    //Controllers
+    // --- Controllers ---
     private ProductController productController;
     private CustomerController customerController;
     private SupplierCotroller supplierController;
     private InventoryLogController inventoryLogController;
+    private InvoiceController invoiceController;
 
-
+    // --- UI Components ---
     private JPanel mainPanel;
     private JPanel menuPanel;
     private JPanel dashboardPanel;
@@ -57,6 +54,9 @@ public class MainWindow extends JFrame {
     private JButton btnProducts;
     private JButton btnSuppliers;
     private JButton btnCustomers;
+    private JPanel firstStatsPanel;
+    private JPanel secondStatsPanel;
+    private JPanel thirdStatsPanel;
 
     public MainWindow() {
         setTitle("Sistema para Colmado");
@@ -67,25 +67,25 @@ public class MainWindow extends JFrame {
         setLocationRelativeTo(null);
 
         initializeWindow();
-
         setVisible(true);
     }
 
     private void initializeWindow() {
-
-        // Inicializar DAOs
+        // Inicialización de Backend
         productDAO = new ProductDAO();
         customerDAO = new CustomerDAO();
         supplierDAO = new SupplierDAO();
         inventoryLogDAO = new InventoryLogDAO();
+        invoiceDAO = new InvoiceDAO(invoiceDetailsDAO);
 
-        // Inicializar Controladores
+
         productController = new ProductController(productDAO);
         customerController = new CustomerController(customerDAO);
         supplierController = new SupplierCotroller(supplierDAO);
         inventoryLogController = new InventoryLogController(inventoryLogDAO);
+        invoiceController = new InvoiceController(invoiceDAO);
 
-        // Cargar Imágenes
+        // Carga de Recursos UI
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
         loadButtonImage(btnInventory, "/img/inventario.png", 35, 35);
         loadButtonImage(btnSearch, "/img/lupa.png", 30, 30);
@@ -95,17 +95,15 @@ public class MainWindow extends JFrame {
         loadButtonImage(btnSuppliers, "/img/proveedor.png", 35, 35);
         loadButtonImage(btnCustomers, "/img/cliente.png", 35, 35);
 
-        // Eventos de Menú
+        // Listeners de Navegación
         btnInventory.addActionListener(e -> selectMenu("inventory"));
         btnSell.addActionListener(e -> selectMenu("sell"));
         btnOrders.addActionListener(e -> selectMenu("orders"));
         btnProducts.addActionListener(e -> selectMenu("products"));
         btnSuppliers.addActionListener(e -> selectMenu("suppliers"));
         btnCustomers.addActionListener(e -> selectMenu("customers"));
-        selectMenu("inventory");
-        //Test
-        btnSearch.addActionListener(e -> loadProductsView());
 
+        selectMenu("inventory");
     }
 
     private void selectMenu(String option) {
@@ -144,15 +142,15 @@ public class MainWindow extends JFrame {
         }
     }
 
+    // --- VISTAS ---
 
     private void loadInventoryView() {
         String[] columns = {"ID LOG", "ID Producto", "Tipo", "Cantidad", "Fecha", "Acciones"};
-        List<InventoryLog> inventoryLogs = inventoryLogController.getAllLogs();
+        List<InventoryLog> logs = inventoryLogController.getAllLogs();
+        Object[][] data = new Object[logs.size()][6];
 
-        Object[][] data = new Object[inventoryLogs.size()][6];
-
-        for (int i = 0; i < inventoryLogs.size(); i++) {
-            InventoryLog log = inventoryLogs.get(i);
+        for (int i = 0; i < logs.size(); i++) {
+            InventoryLog log = logs.get(i);
             data[i][0] = log.getIdLog();
             data[i][1] = log.getIdProduct();
             data[i][2] = log.getMovementType();
@@ -161,80 +159,209 @@ public class MainWindow extends JFrame {
             data[i][5] = "";
         }
 
-        CustomTableGenerator inventoryTable = new CustomTableGenerator(
-                columns,
-                data,
-                e -> {
+        CustomTableGenerator table = new CustomTableGenerator(
+                columns, data,
+                e -> { // Editar
+                    int row = e.getID();
+                    int idLog = (int) data[row][0];
+                    String[] values = {
+                            String.valueOf(data[row][1]),
+                            String.valueOf(data[row][2]),
+                            String.valueOf(data[row][3])
+                    };
+                    String[] labels = {"ID Producto", "Tipo de movimiento", "Cantidad"};
+                    openUpdateDialog("Inventario", labels, values, idLog, this::loadInventoryView);
                 },
-                e -> {
+                e -> { // Eliminar
+                    int row = e.getID();
+                    int idLog = (int) data[row][0];
+                    confirmAndDelete("Log #" + idLog, () -> inventoryLogController.deleteLog(idLog), this::loadInventoryView);
                 }
         );
 
-        tablesContainer.setViewportView(inventoryTable.getTable());
+        tablesContainer.setViewportView(table.getTable());
+
+        // Actualizar Stats
+        int total = productController.getAllProducts().size();
+        int lowStock = productDAO.findLowStock().size();
+        updateStatPanel(firstStatsPanel, "Total Productos", String.valueOf(total));
+        updateStatPanel(secondStatsPanel, "Stock Bajo", String.valueOf(lowStock));
+        updateStatPanel(thirdStatsPanel, "Ventas Hoy", "$0.00");
 
         openAddWindow(btnAdd, "Inventario", new String[]{"ID Producto", "Tipo de movimiento", "Cantidad"}, this::loadInventoryView);
     }
 
     private void loadProductsView() {
-        String text = searchTextField.getText().trim();
-        List<Product> products = text.isEmpty()
-                ? productController.getAllProducts()
-                : productController.getSearchProducts(text);
-
+        String[] columns = {"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"};
+        List<Product> products = productController.getAllProducts();
         Object[][] data = new Object[products.size()][7];
 
-        updateTable(tablesContainer, products,
-                new String[]{"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"},
-                p -> new Object[]{
-                        p.getId(),
-                        p.getName(),
-                        p.getCategory(),
-                        p.getUnitPrice(),
-                        p.getInventoryQuantity(),
-                        p.getExpirationDate() != null ? p.getExpirationDate().toString() : "N/A",
-                        ""
-                });
+        for (int i = 0; i < products.size(); i++) {
+            Product p = products.get(i);
+            data[i][0] = p.getId();
+            data[i][1] = p.getName();
+            data[i][2] = p.getCategory();
+            data[i][3] = p.getUnitPrice();
+            data[i][4] = p.getInventoryQuantity();
+            data[i][5] = (p.getExpirationDate() != null) ? p.getExpirationDate().toString() : "N/A";
+            data[i][6] = "";
+        }
+
+        CustomTableGenerator table = new CustomTableGenerator(
+                columns, data,
+                e -> {
+                    int row = e.getID();
+                    int id = (int) data[row][0];
+                    String[] values = {
+                            String.valueOf(data[row][1]),
+                            String.valueOf(data[row][2]),
+                            String.valueOf(data[row][3]),
+                            String.valueOf(data[row][4]),
+                            String.valueOf(data[row][5])
+                    };
+                    String[] labels = {"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"};
+                    openUpdateDialog("Producto", labels, values, id, this::loadProductsView);
+                },
+                e -> { // Eliminar
+                    int row = e.getID();
+                    int id = (int) data[row][0];
+                    String name = (String) data[row][1];
+                    confirmAndDelete(name, () -> productController.deleteProduct(id), this::loadProductsView);
+                }
+        );
+
+        tablesContainer.setViewportView(table.getTable());
         openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"}, this::loadProductsView);
     }
 
     private void loadSuppliersView() {
-        List<Supplier> suppliers = supplierController.getAllSuppliers();
-
+        List<Supplier> list = supplierController.getAllSuppliers();
         CustomCardGenerator cards = new CustomCardGenerator(
-                suppliers,
-                e -> System.out.println("Editar ID: " + e.getID()),
-                e -> { /* Lógica eliminar */ }
+                list,
+                e -> { // Editar
+                    int id = e.getID();
+                    Supplier s = list.stream().filter(x -> x.getId() == id).findFirst().orElse(null);
+                    if(s != null) {
+                        String[] values = { s.getName(), s.getAddress(), s.getPhone(), s.getFiscalIdentification() };
+                        String[] labels = {"Nombre", "Dirección", "Teléfono", "RNC"};
+                        openUpdateDialog("Proveedor", labels, values, id, this::loadSuppliersView);
+                    }
+                },
+                e -> { // Eliminar
+                    int id = e.getID();
+                    confirmAndDelete("Proveedor #" + id, () -> supplierController.deleteSupplier(id), this::loadSuppliersView);
+                }
         );
-
         tablesContainer.setViewportView(cards.getContainer());
-
         openAddWindow(btnAdd, "Proveedor", new String[]{"Nombre", "Dirección", "Teléfono", "RNC"}, this::loadSuppliersView);
     }
 
     private void loadCustomersView() {
-        List<Customer> customers = customerController.getAllCustomers();
-
+        List<Customer> list = customerController.getAllCustomers();
         CustomCardGenerator cards = new CustomCardGenerator(
-                customers,
-                e -> System.out.println("Editar ID: " + e.getID()),
-                e -> System.out.println("Eliminar ID: " + e.getID())
+                list,
+                e -> { // Editar
+                    int id = e.getID();
+                    Customer c = list.stream().filter(x -> x.getId() == id).findFirst().orElse(null);
+                    if(c != null) {
+                        String[] values = { c.getName(), c.getAddress(), c.getPhone(), c.getFiscalIdentification() };
+                        String[] labels = {"Nombre", "Dirección", "Teléfono", "Cédula"};
+                        openUpdateDialog("Cliente", labels, values, id, this::loadCustomersView);
+                    }
+                },
+                e -> { // Eliminar
+                    int id = e.getID();
+                    confirmAndDelete("Cliente #" + id, () -> customerController.deleteCustomer(id), this::loadCustomersView);
+                }
         );
-
         tablesContainer.setViewportView(cards.getContainer());
-
         openAddWindow(btnAdd, "Cliente", new String[]{"Nombre", "Dirección", "Teléfono", "Cédula"}, this::loadCustomersView);
     }
 
     private void loadSellView() {
-        tablesContainer.setViewportView(new JPanel());
-        openAddWindow(btnAdd, "Nueva Venta", new String[]{"Cliente", "Productos", "Total", "Método Pago"}, () -> {
-        });
+        openAddWindow(btnAdd, "Nueva Venta", new String[]{"ID Persona", "Total", "Método Pago"}, () -> {});
+        String[] columns = {"ID Factura", "Fecha", "ID Persona", "Total", "Metodo Pago", "Acciones"};
+
+        List<Invoice> invoices = invoiceController.getAllInvoices();
+        Object[][] data = new Object[invoices.size()][6];
+
+        for (int i = 0; i < invoices.size(); i++) {
+            Invoice inv = invoices.get(i);
+            data[i][0] = inv.getId();
+            data[i][1] = inv.getDateTime();
+            data[i][2] = inv.getCustomer().getId();
+            data[i][3] = inv.getTotal();
+            data[i][4] = inv.getPaymentMethod();
+            data[i][5] = "";
+        }
+
+        CustomTableGenerator table = new CustomTableGenerator(
+                columns, data,
+                e -> { /* Ver */ },
+                e -> { /* Eliminar */ }
+        );
+        tablesContainer.setViewportView(table.getTable());
     }
 
     private void loadOrdersView() {
         tablesContainer.setViewportView(new JPanel());
-        openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"}, () -> {
+        openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"}, () -> {});
+    }
+
+    // --- UTILS & HELPERS ---
+
+    private void openAddWindow(JButton button, String title, String[] labels, Runnable onWindowClosed) {
+        for (ActionListener l : button.getActionListeners()) button.removeActionListener(l);
+        button.addActionListener(e -> {
+            button.setEnabled(false);
+            AddWindow w = new AddWindow(title, labels);
+            w.addWindowListener(new WindowAdapter() {
+                public void windowClosed(WindowEvent ev) {
+                    button.setEnabled(true);
+                    if (onWindowClosed != null) onWindowClosed.run();
+                }
+            });
         });
+    }
+
+    private void openUpdateDialog(String title, String[] labels, String[] values, int idToUpdate, Runnable onWindowClosed) {
+        UpdateDialog dialog = new UpdateDialog(title, labels, values, idToUpdate);
+        dialog.addWindowListener(new WindowAdapter() {
+            public void windowClosed(WindowEvent e) {
+                if (onWindowClosed != null) onWindowClosed.run();
+            }
+        });
+        dialog.setVisible(true);
+    }
+
+    private void confirmAndDelete(String itemName, BooleanSupplier deleteAction, Runnable reloadView) {
+        int opt = JOptionPane.showConfirmDialog(this,
+                "¿Eliminar " + itemName + "?\nEsta acción no se puede deshacer.",
+                "Confirmar Eliminación", JOptionPane.YES_NO_OPTION);
+
+        if (opt == JOptionPane.YES_OPTION) {
+            try {
+                if (deleteAction.getAsBoolean()) {
+                    JOptionPane.showMessageDialog(this, "Eliminado correctamente.");
+                    reloadView.run();
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se pudo eliminar.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error de integridad: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void updateStatPanel(JPanel target, String title, String value) {
+        if (target != null) {
+            target.removeAll();
+            target.setLayout(new BorderLayout());
+            target.setOpaque(false);
+            target.add(new StatsCard(title, value), BorderLayout.CENTER);
+            target.revalidate();
+            target.repaint();
+        }
     }
 
     private void loadLabelImage(JLabel label, String path, int width, int height) {
@@ -242,9 +369,7 @@ public class MainWindow extends JFrame {
             ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
             Image scaled = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
             label.setIcon(new ImageIcon(scaled));
-        } catch (Exception e) {
-            System.err.println("Error loading label image: " + e.getMessage());
-        }
+        } catch (Exception e) { System.err.println("Img Error: " + e.getMessage()); }
     }
 
     private void loadButtonImage(JButton button, String path, int width, int height) {
@@ -255,65 +380,19 @@ public class MainWindow extends JFrame {
             button.setHorizontalTextPosition(SwingConstants.RIGHT);
             button.setIconTextGap(10);
             button.setBorderPainted(false);
-        } catch (Exception e) {
-            System.err.println("Error loading button image: " + e.getMessage());
-        }
+        } catch (Exception e) { System.err.println("Img Error: " + e.getMessage()); }
     }
-
-    private void openAddWindow(JButton button, String title, String[] labels, Runnable onWindowClosed) {
-        for (ActionListener l : button.getActionListeners()) {
-            button.removeActionListener(l);
-        }
-
-        button.addActionListener(e -> {
-            button.setEnabled(false);
-
-            AddWindow addWindow = new AddWindow(title, labels);
-            addWindow.addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosed(WindowEvent e) {
-                    button.setEnabled(true);
-                    if (onWindowClosed != null) {
-                        onWindowClosed.run();
-                    }
-                }
-            });
-        });
-    }
-
-    private <U> void updateTable(JScrollPane container, List<U> items, String[] columns, RowMapper<U> mapper) {
-        Object[][] data = new Object[items.size()][columns.length];
-
-        for (int i = 0; i < items.size(); i++) {
-            data[i] = mapper.map(items.get(i));
-        }
-
-        CustomTableGenerator table = new CustomTableGenerator(
-                columns,
-                data,
-                e -> {
-                },
-                e -> {
-                }
-        );
-
-        container.setViewportView(table.getTable());
-    }
-
 }
 
 class ProgramExecute {
     public static void main(String[] args) {
         try {
-            FlatDarkLaf.setup();
+            FlatLightLaf.setup();
             UIManager.put("Button.arc", 15);
             UIManager.put("Component.arc", 15);
             UIManager.put("TextComponent.arc", 14);
             UIManager.put("Table.cellMargins", new Insets(8, 8, 8, 8));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
+        } catch (Exception ex) { ex.printStackTrace(); }
         SwingUtilities.invokeLater(MainWindow::new);
     }
 }

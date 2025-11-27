@@ -27,7 +27,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
             double subTotalCalculated = entity.getSubtTotal();
 
             int rows = CONNECTION.executeUpdate(query,
-                    entity.getInvoice().getIdInvoice(),
+                    entity.getInvoice().getId(),
                     entity.getProduct().getId(),
                     entity.getQuantity(),
                     entity.getUnitPrice(),
@@ -135,7 +135,7 @@ public class InvoiceDetailsDAO implements ICRUD<InvoiceDetails> {
         detail.setSubtTotal(rs.getDouble("sub_total"));
 
         Invoice stubInvoice = new Invoice();
-        stubInvoice.setIdInvoice(rs.getInt("id_invoice"));
+        stubInvoice.setId(rs.getInt("id_invoice"));
         detail.setInvoice(stubInvoice);
 
         return detail;

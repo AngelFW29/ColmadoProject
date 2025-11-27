@@ -2,9 +2,12 @@ package DAO;
 
 import Model.Invoice;
 import Model.Customer;
+import Model.PaymentMethod;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,15 +25,19 @@ public class InvoiceDAO implements ICRUD<Invoice> {
     public boolean create(Invoice invoice) {
         String sql = "INSERT INTO Invoice (created_at, id_person, total, payment_method) VALUES (?, ?, ?, ?)";
         try {
+            Timestamp sqlDate = Timestamp.valueOf(invoice.getDateTime());
+
+            String paymentMethodStr = invoice.getPaymentMethod().name();
+
             int rows = conexion.executeUpdate(sql,
-                    new java.sql.Timestamp(invoice.getDate().getTime()),
+                    sqlDate,
                     invoice.getCustomer().getId(),
                     invoice.getTotal(),
-                    invoice.getPaymentMethod()
+                    paymentMethodStr
             );
             return rows > 0;
         } catch (SQLException e) {
-            System.out.println("Error creating invoice: " + e.getMessage());
+            System.err.println("Error creating invoice: " + e.getMessage());
             return false;
         }
     }
@@ -40,28 +47,10 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         String sql = "SELECT * FROM Invoice WHERE id_invoice = ?";
         try (ResultSet rs = conexion.executeQuery(sql, id)) {
             if (rs.next()) {
-                Customer customer = new Customer();
-                customer.setId(rs.getInt("id_person"));
-
-                Invoice invoice = new Invoice(
-                        rs.getInt("id_invoice"),
-                        rs.getTimestamp("created_at"),
-                        customer,
-                        new ArrayList<>(),
-                        rs.getDouble("total"),
-                        rs.getString("payment_method")
-                );
-
-                try {
-                    invoice.setItems(new ArrayList<>(invoiceDetailsDAO.findAllByInvoiceId(id)));
-                } catch (Exception e) {
-                    invoice.setItems(new ArrayList<>());
-                }
-
-                return invoice;
+                return mapResultSetToInvoice(rs);
             }
         } catch (SQLException e) {
-            System.out.println("Error reading invoice: " + e.getMessage());
+            System.err.println("Error reading invoice: " + e.getMessage());
         }
         return null;
     }
@@ -73,12 +62,12 @@ public class InvoiceDAO implements ICRUD<Invoice> {
             int rows = conexion.executeUpdate(sql,
                     invoice.getCustomer().getId(),
                     invoice.getTotal(),
-                    invoice.getPaymentMethod(),
-                    invoice.getIdInvoice()
+                    invoice.getPaymentMethod().name(),
+                    invoice.getId()
             );
             return rows > 0;
         } catch (SQLException e) {
-            System.out.println("Error updating invoice: " + e.getMessage());
+            System.err.println("Error updating invoice: " + e.getMessage());
             return false;
         }
     }
@@ -90,7 +79,7 @@ public class InvoiceDAO implements ICRUD<Invoice> {
             int rows = conexion.executeUpdate(sql, id);
             return rows > 0;
         } catch (SQLException e) {
-            System.out.println("Error deleting invoice: " + e.getMessage());
+            System.err.println("Error deleting invoice: " + e.getMessage());
             return false;
         }
     }
@@ -101,36 +90,61 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         String sql = "SELECT * FROM Invoice";
         try (ResultSet rs = conexion.executeQuery(sql)) {
             while (rs.next()) {
-                Customer customer = new Customer();
-                customer.setId(rs.getInt("id_person"));
-
-                int invoiceId = rs.getInt("id_invoice");
-
-                Invoice invoice = new Invoice(
-                        invoiceId,
-                        rs.getTimestamp("created_at"),
-                        customer,
-                        new ArrayList<>(),
-                        rs.getDouble("total"),
-                        rs.getString("payment_method")
-                );
-
-                invoice.setItems(new ArrayList<>(invoiceDetailsDAO.findAllByInvoiceId(invoiceId)));
-                invoices.add(invoice);
+                invoices.add(mapResultSetToInvoice(rs));
             }
         } catch (SQLException e) {
-            System.out.println("Error retrieving invoices: " + e.getMessage());
+            System.err.println("Error retrieving invoices: " + e.getMessage());
         }
         return invoices;
     }
 
-    public double TodaySales() {
+    public double getTodaySales() {
         String sql = "SELECT SUM(total) AS Ventas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
         try (ResultSet rs = conexion.executeQuery(sql)) {
-            if (rs.next()) return rs.getDouble("Ventas_hoy");
-        } catch (SQLException e) { e.printStackTrace(); }
+            if (rs.next()) {
+                double total = rs.getDouble("Ventas_hoy");
+                return rs.wasNull() ? 0.0 : total;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return 0.0;
     }
 
+    private Invoice mapResultSetToInvoice(ResultSet rs) throws SQLException {
+        Customer customer = new Customer();
+        customer.setId(rs.getInt("id_person"));
 
+        Timestamp ts = rs.getTimestamp("created_at");
+        LocalDateTime dateTime = (ts != null) ? ts.toLocalDateTime() : null;
+
+        String pmString = rs.getString("payment_method");
+        PaymentMethod pm = PaymentMethod.CASH;
+        if (pmString != null) {
+            try {
+                pm = PaymentMethod.valueOf(pmString);
+            } catch (IllegalArgumentException e) {
+                System.err.println("Método de pago desconocido en BD: " + pmString);
+            }
+        }
+
+        Invoice invoice = new Invoice(
+                rs.getInt("id_invoice"),
+                dateTime,
+                customer,
+                new ArrayList<>(),
+                rs.getDouble("total"),
+                pm
+        );
+
+        try {
+            if (invoiceDetailsDAO != null) {
+                invoice.setItems(invoiceDetailsDAO.findAllByInvoiceId(invoice.getId()));
+            }
+        } catch (Exception e) {
+            System.err.println("Error cargando detalles para factura " + invoice.getId());
+        }
+
+        return invoice;
+    }
 }

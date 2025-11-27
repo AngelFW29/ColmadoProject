@@ -1,66 +1,68 @@
 package Model;
 
-import Service.ISubTotal;
 import Service.IFacturable;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class Invoice implements IFacturable {
     private int id;
-    private Date date;
+    private LocalDateTime dateTime;
     private Customer customer;
-    private ArrayList<InvoiceDetails> items;
+    private List<InvoiceDetails> items;
     private double total;
-    private String paymentMethod;
+    private PaymentMethod paymentMethod;
 
     public Invoice() {
+        this.items = new ArrayList<>();
+        this.dateTime = LocalDateTime.now();
     }
 
-    public Invoice(int id, Date date, Customer customer, ArrayList<InvoiceDetails> items,
-                   double total, String paymentMethod) {
+    public Invoice(int id, LocalDateTime dateTime, Customer customer, List<InvoiceDetails> items,
+                   double total, PaymentMethod paymentMethod) {
         this.id = id;
-        this.date = date;
+        this.dateTime = dateTime;
         this.customer = customer;
         this.items = items;
         this.total = total;
         this.paymentMethod = paymentMethod;
     }
 
-    public Invoice(Customer customer, String paymentMethod) {
+
+    public Invoice(Customer customer, PaymentMethod paymentMethod) {
         this.id = 0;
-        this.date = new Date();
+        this.dateTime = LocalDateTime.now();
         this.customer = customer;
         this.items = new ArrayList<>();
-        this.total = 0;
+        this.total = 0.0;
         this.paymentMethod = paymentMethod;
     }
 
 
-    public int getIdInvoice() {
+    public int getId() {
         return id;
     }
 
-    public void setIdInvoice(int id) {
+    public void setId(int id) {
         this.id = id;
     }
 
-    public Date getDate() {
-        return date;
+    public LocalDateTime getDateTime() {
+        return dateTime;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public void setDateTime(LocalDateTime dateTime) {
+        this.dateTime = dateTime;
     }
 
-    public ArrayList<InvoiceDetails> getItems() {
+    public List<InvoiceDetails> getItems() {
         return items;
     }
 
     public void setItems(List<InvoiceDetails> items) {
-        this.items = new ArrayList<>(items);
+        this.items = items;
+        calculateTotal();
     }
 
     public Customer getCustomer() {
@@ -79,30 +81,31 @@ public class Invoice implements IFacturable {
         this.total = total;
     }
 
-    public String getPaymentMethod() {
+    public PaymentMethod getPaymentMethod() {
         return paymentMethod;
     }
 
-    public void setPaymentMethod(String paymentMethod) {
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
         this.paymentMethod = paymentMethod;
     }
 
+    // --- Métodos de Lógica ---
     public void addItem(InvoiceDetails item) {
-        if (items == null) items = new ArrayList<>();
-        items.add(item);
-        this.total += item.getSubtTotal();
+        if (this.items == null) {
+            this.items = new ArrayList<>();
+        }
+        this.items.add(item);
+        calculateTotal();
     }
 
     @Override
     public double calculateTotal() {
         double sum = 0;
-
         if (items != null) {
             for (InvoiceDetails detail : items) {
                 sum += detail.getSubtTotal();
             }
         }
-
         this.total = sum;
         return sum;
     }
