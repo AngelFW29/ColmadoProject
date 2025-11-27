@@ -65,7 +65,7 @@ public class InvoiceService {
             // B) Descontar Inventario
             int nuevoStock = p.getInventoryQuantity() - qty;
             p.setInventoryQuantity(nuevoStock);
-            productDAO.update(p); // Actualiza la tabla Product
+            productDAO.update(p);
 
             InventoryLog log = new InventoryLog(
                     p.getId(),

@@ -126,8 +126,6 @@ public class PurchaseOrderDetailsDAO implements ICRUD<PurchaseOrderDetails> {
 
         detail.setIdPurchaseOrderDetail(rs.getInt("id_purchase_detail"));
 
-        // Asignamos una referencia "Stub" (parcial) a la orden padre
-        // para evitar un bucle infinito de lectura (Orden -> Detalles -> Orden...)
         PurchaseOrder stubOrder = new PurchaseOrder();
         stubOrder.setIdPurchaseOrder(rs.getInt("id_purchase_order"));
         detail.setPurchaseOrder(stubOrder);

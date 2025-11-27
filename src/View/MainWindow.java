@@ -5,9 +5,10 @@ import DAO.*;
 import Model.*;
 import Util.CustomCardGenerator;
 import Util.CustomTableGenerator;
+import Util.RowMapper;
 import Util.StatsCard;
 import com.formdev.flatlaf.FlatLightLaf;
-import View.SalesDialog;
+import Util.SalesDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +21,7 @@ import java.util.function.BooleanSupplier;
 
 public class MainWindow extends JFrame {
 
-    // --- DAOs ---
+    // DAOs
     private ProductDAO productDAO;
     private CustomerDAO customerDAO;
     private SupplierDAO supplierDAO;
@@ -28,14 +29,18 @@ public class MainWindow extends JFrame {
     private InvoiceDAO invoiceDAO;
     private InvoiceDetailsDAO invoiceDetailsDAO;
 
-    // --- Controllers ---
+    // Controllers
     private ProductController productController;
     private CustomerController customerController;
     private SupplierCotroller supplierController;
     private InventoryLogController inventoryLogController;
     private InvoiceController invoiceController;
 
-    // --- UI Components ---
+    // Data Table
+    private Object[][] currentTableData;
+
+
+    // UI Components
     private JPanel mainPanel;
     private JPanel menuPanel;
     private JPanel dashboardPanel;
@@ -102,6 +107,8 @@ public class MainWindow extends JFrame {
         btnSuppliers.addActionListener(e -> selectMenu("suppliers"));
         btnCustomers.addActionListener(e -> selectMenu("customers"));
 
+        btnSearch.addActionListener(e -> loadProductsView());
+
         selectMenu("inventory");
     }
 
@@ -121,6 +128,7 @@ public class MainWindow extends JFrame {
         updateStatPanel(secondStatsPanel, "Stock Bajo", String.valueOf(lowStock));
         updateStatPanel(thirdStatsPanel, "Ventas Hoy", "$" + totalSales.toString());
 
+        // Navegación entre ventanas
         switch (option) {
             case "inventory":
                 btnInventory.setSelected(true);
@@ -149,90 +157,101 @@ public class MainWindow extends JFrame {
         }
     }
 
-    // --- VISTAS ---
-
+    // --- VISTAS
     private void loadInventoryView() {
-        String[] columns = {"ID LOG", "ID Producto", "Tipo", "Cantidad", "Fecha", "Acciones"};
         List<InventoryLog> logs = inventoryLogController.getAllLogs();
-        Object[][] data = new Object[logs.size()][6];
 
-        for (int i = 0; i < logs.size(); i++) {
-            InventoryLog log = logs.get(i);
-            data[i][0] = log.getIdLog();
-            data[i][1] = log.getIdProduct();
-            data[i][2] = log.getMovementType();
-            data[i][3] = log.getQuantityChange();
-            data[i][4] = log.getMovementDate().toString();
-            data[i][5] = "";
-        }
+        currentTableData = updateTable(
+                tablesContainer,
+                logs,
+                new String[]{"ID LOG", "ID Producto", "Tipo", "Cantidad", "Fecha", "Acciones"},
 
-        CustomTableGenerator table = new CustomTableGenerator(
-                columns, data,
+                l -> new Object[]{
+                        l.getIdLog(),
+                        l.getIdProduct(),
+                        l.getMovementType(),
+                        l.getQuantityChange(),
+                        l.getMovementDate(),
+                        ""
+                },
+
                 e -> { // Editar
                     int row = e.getID();
-                    int idLog = (int) data[row][0];
+                    int idLog = (int) currentTableData[row][0];
                     String[] values = {
-                            String.valueOf(data[row][1]),
-                            String.valueOf(data[row][2]),
-                            String.valueOf(data[row][3])
+                            String.valueOf(currentTableData[row][1]),
+                            String.valueOf(currentTableData[row][2]),
+                            String.valueOf(currentTableData[row][3])
                     };
                     String[] labels = {"ID Producto", "Tipo de movimiento", "Cantidad"};
                     openUpdateDialog("Inventario", labels, values, idLog, this::loadInventoryView);
                 },
                 e -> { // Eliminar
                     int row = e.getID();
-                    int idLog = (int) data[row][0];
+                    int idLog = (int) currentTableData[row][0];
                     confirmAndDelete("Log #" + idLog, () -> inventoryLogController.deleteLog(idLog), this::loadInventoryView);
+
                 }
         );
 
-        tablesContainer.setViewportView(table.getTable());
 
-
-        openAddWindow(btnAdd, "Inventario", new String[]{"ID Producto", "Tipo de movimiento", "Cantidad"}, this::loadInventoryView);
+        openAddWindow(btnAdd,
+                "Inventario", new String[]{"ID Producto", "Tipo de movimiento", "Cantidad"},
+                this::loadInventoryView);
     }
 
     private void loadProductsView() {
-        String[] columns = {"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"};
-        List<Product> products = productController.getAllProducts();
-        Object[][] data = new Object[products.size()][7];
+        String text = searchTextField.getText().trim();
+        List<Product> products = text.isEmpty()
+                ? productController.getAllProducts()
+                : productController.getSearchProducts(text);
 
-        for (int i = 0; i < products.size(); i++) {
-            Product p = products.get(i);
-            data[i][0] = p.getId();
-            data[i][1] = p.getName();
-            data[i][2] = p.getCategory();
-            data[i][3] = p.getUnitPrice();
-            data[i][4] = p.getInventoryQuantity();
-            data[i][5] = (p.getExpirationDate() != null) ? p.getExpirationDate().toString() : "N/A";
-            data[i][6] = "";
-        }
+        currentTableData = updateTable(
+                tablesContainer,
+                products,
+                new String[]{"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"},
 
-        CustomTableGenerator table = new CustomTableGenerator(
-                columns, data,
+                p -> new Object[]{
+                        p.getId(),
+                        p.getName(),
+                        p.getCategory(),
+                        p.getUnitPrice(),
+                        p.getInventoryQuantity(),
+                        p.getExpirationDate() != null ? p.getExpirationDate().toString() : "N/A",
+                        ""
+                },
+
                 e -> {
                     int row = e.getID();
-                    int id = (int) data[row][0];
+                    int id = (int)currentTableData[row][0];
+
                     String[] values = {
-                            String.valueOf(data[row][1]),
-                            String.valueOf(data[row][2]),
-                            String.valueOf(data[row][3]),
-                            String.valueOf(data[row][4]),
-                            String.valueOf(data[row][5])
+                            String.valueOf(currentTableData[row][1]),
+                            String.valueOf(currentTableData[row][2]),
+                            String.valueOf(currentTableData[row][3]),
+                            String.valueOf(currentTableData[row][4]),
+                            String.valueOf(currentTableData[row][5])
                     };
+
                     String[] labels = {"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"};
                     openUpdateDialog("Producto", labels, values, id, this::loadProductsView);
                 },
-                e -> { // Eliminar
+
+                e -> {
                     int row = e.getID();
-                    int id = (int) data[row][0];
-                    String name = (String) data[row][1];
-                    confirmAndDelete(name, () -> productController.deleteProduct(id), this::loadProductsView);
+                    int id = (int) currentTableData[row][0];
+                    String name = (String) currentTableData[row][1];
+
+                    confirmAndDelete(name,
+                            () -> productController.deleteProduct(id),
+                            this::loadProductsView
+                    );
                 }
         );
 
-        tablesContainer.setViewportView(table.getTable());
-        openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"}, this::loadProductsView);
+        openAddWindow(btnAdd, "Producto",
+                new String[]{"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"},
+                this::loadProductsView);
     }
 
     private void loadSuppliersView() {
@@ -280,53 +299,51 @@ public class MainWindow extends JFrame {
     }
 
     private void loadSellView() {
-        for (java.awt.event.ActionListener l : btnAdd.getActionListeners()) {
+        for (ActionListener l : btnAdd.getActionListeners()) {
             btnAdd.removeActionListener(l);
         }
 
         btnAdd.addActionListener(e -> {
-            SalesDialog dialog = new SalesDialog(this); // 'this' es MainWindow
+            SalesDialog dialog = new SalesDialog(this);
             dialog.setVisible(true);
 
             loadSellView();
         });
 
-        String[] columns = {"ID Factura", "Fecha", "ID Persona", "Total", "Metodo Pago", "Acciones"};
-
         List<Invoice> invoices = invoiceController.getAllInvoices();
-        Object[][] data = new Object[invoices.size()][6];
+        currentTableData = updateTable(
+                tablesContainer,
+                invoices,
+                new String[]{"ID Factura", "Fecha", "ID Persona", "Metodo Pago", "Total", "Acciones"},
 
-        for (int i = 0; i < invoices.size(); i++) {
-            Invoice inv = invoices.get(i);
-            data[i][0] = inv.getId();
-            data[i][1] = inv.getDateTime();
-            data[i][2] = inv.getCustomer().getId();
-            data[i][3] = inv.getTotal();
-            data[i][4] = inv.getPaymentMethod();
-            data[i][5] = "";
-        }
+                i -> new Object[]{
+                        i.getId(),
+                        i.getDateTime(),
+                        i.getCustomer().getId(),
+                        i.getPaymentMethod(),
+                        i.getTotal(),
+                        ""
+                },
 
-        CustomTableGenerator table = new CustomTableGenerator(
-                columns, data,
                 e -> { // Editar
                     int row = e.getID();
-                    int idLog = (int) data[row][0];
+                    int idLog = (int) currentTableData[row][0];
                     String[] values = {
-                            String.valueOf(data[row][1]),
-                            String.valueOf(data[row][2]),
-                            String.valueOf(data[row][3]),
-                            String.valueOf(data[row][4]),
+                            String.valueOf(currentTableData[row][1]),
+                            String.valueOf(currentTableData[row][2]),
+                            String.valueOf(currentTableData[row][3]),
+                            String.valueOf(currentTableData[row][4]),
                     };
                     String[] labels = {"ID Producto", "Tipo de movimiento", "Cantidad"};
                     openUpdateDialog("Ventas", labels, values, idLog, this::loadSellView);
                 },
                 e -> { // Eliminar
                     int row = e.getID();
-                    int idInvoice = (int) data[row][0];
+                    int idInvoice = (int) currentTableData[row][0];
                     confirmAndDelete("Log #" + idInvoice, () -> invoiceController.deleteInvoice(idInvoice), this::loadSellView);
                 }
         );
-        tablesContainer.setViewportView(table.getTable());
+
     }
 
     private void loadOrdersView() {
@@ -407,6 +424,32 @@ public class MainWindow extends JFrame {
             button.setIconTextGap(10);
             button.setBorderPainted(false);
         } catch (Exception e) { System.err.println("Img Error: " + e.getMessage()); }
+    }
+
+    private <U> Object[][] updateTable(
+            JScrollPane container,
+            List<U> items,
+            String[] columns,
+            RowMapper<U> mapper,
+            ActionListener actionEditListener,
+            ActionListener actionDeleteListener
+    ) {
+
+        Object[][] data = new Object[items.size()][columns.length];
+
+        for (int i = 0; i < items.size(); i++) {
+            data[i] = mapper.map(items.get(i));
+        }
+
+        CustomTableGenerator table = new CustomTableGenerator(
+                columns,
+                data,
+                actionEditListener,
+                actionDeleteListener
+        );
+
+        container.setViewportView(table.getTable());
+        return data;
     }
 }
 
