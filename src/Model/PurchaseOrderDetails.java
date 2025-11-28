@@ -6,6 +6,7 @@ public class PurchaseOrderDetails {
     private Product product;
     private int quantity;
     private double unitCost;
+    private double subTotal;
 
     public PurchaseOrderDetails() {
     }
@@ -60,4 +61,7 @@ public class PurchaseOrderDetails {
         return quantity * unitCost;
     }
 
+    public void setSubTotal(double subTotal) {
+        this.subTotal = subTotal;
+    }
 }

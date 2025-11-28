@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SalesDialog extends JDialog {
-    private JComboBox<Customer> comboCustomers;
+    private JComboBox<String> comboCustomers;
     private JComboBox<Product> comboProducts;
     private JComboBox<PaymentMethod> comboPayment;
     private JTextField txtQuantity;
@@ -63,7 +63,6 @@ public class SalesDialog extends JDialog {
         // Sub-panel para selección de producto
         JPanel productPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         comboProducts = new JComboBox<>();
-        // Personalizamos cómo se ve el producto en el combo
         comboProducts.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -117,7 +116,7 @@ public class SalesDialog extends JDialog {
 
     private void loadData() {
         List<Customer> customers = customerController.getAllCustomers();
-        for (Customer c : customers) comboCustomers.addItem(c);
+        for (Customer c : customers) comboCustomers.addItem(c.getName());
 
         // Cargar Productos (Solo los que tienen stock > 0)
         List<Product> products = productController.getAllProducts();
@@ -177,7 +176,9 @@ public class SalesDialog extends JDialog {
             return;
         }
 
-        Customer customer = (Customer) comboCustomers.getSelectedItem();
+        String customerName = comboCustomers.getSelectedItem().toString();
+        Customer customer = customerController.getCustomerByName(customerName);
+
         PaymentMethod method = (PaymentMethod) comboPayment.getSelectedItem();
 
         int confirm = JOptionPane.showConfirmDialog(this, "¿Procesar venta?", "Confirmar", JOptionPane.YES_NO_OPTION);

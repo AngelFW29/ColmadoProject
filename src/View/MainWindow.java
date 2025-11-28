@@ -3,12 +3,8 @@ package View;
 import Controller.*;
 import DAO.*;
 import Model.*;
-import Util.CustomCardGenerator;
-import Util.CustomTableGenerator;
-import Util.RowMapper;
-import Util.StatsCard;
+import Util.*;
 import com.formdev.flatlaf.FlatLightLaf;
-import Util.SalesDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,19 +18,24 @@ import java.util.function.BooleanSupplier;
 public class MainWindow extends JFrame {
 
     // DAOs
+    private CategoryProductDAO categoryProductDAO;
     private ProductDAO productDAO;
     private CustomerDAO customerDAO;
     private SupplierDAO supplierDAO;
     private InventoryLogDAO inventoryLogDAO;
     private InvoiceDAO invoiceDAO;
     private InvoiceDetailsDAO invoiceDetailsDAO;
+    private PurchaseOrderDAO purchaseOrderDAO;
+    private PurchaseOrderDetailsDAO purchaseOrderDetailsDAO;
 
     // Controllers
+    private CategoryController categoryController;
     private ProductController productController;
     private CustomerController customerController;
     private SupplierCotroller supplierController;
     private InventoryLogController inventoryLogController;
     private InvoiceController invoiceController;
+    private PurchaseOrderController purchaseOrderController;
 
     // Data Table
     private Object[][] currentTableData;
@@ -81,13 +82,14 @@ public class MainWindow extends JFrame {
         supplierDAO = new SupplierDAO();
         inventoryLogDAO = new InventoryLogDAO();
         invoiceDAO = new InvoiceDAO(invoiceDetailsDAO);
-
+        purchaseOrderDAO = new PurchaseOrderDAO();
 
         productController = new ProductController(productDAO);
         customerController = new CustomerController(customerDAO);
         supplierController = new SupplierCotroller(supplierDAO);
         inventoryLogController = new InventoryLogController(inventoryLogDAO);
         invoiceController = new InvoiceController(invoiceDAO);
+        purchaseOrderController = new PurchaseOrderController(purchaseOrderDAO);
 
         // Carga de Recursos UI
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
@@ -157,7 +159,7 @@ public class MainWindow extends JFrame {
         }
     }
 
-    // --- VISTAS
+    // VISTAS
     private void loadInventoryView() {
         List<InventoryLog> logs = inventoryLogController.getAllLogs();
 
@@ -233,7 +235,7 @@ public class MainWindow extends JFrame {
                             String.valueOf(currentTableData[row][5])
                     };
 
-                    String[] labels = {"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"};
+                    String[] labels = {"Nombre", "Categoría", "Precio", "Stock", "Fecha de expiración"};
                     openUpdateDialog("Producto", labels, values, id, this::loadProductsView);
                 },
 
@@ -250,7 +252,7 @@ public class MainWindow extends JFrame {
         );
 
         openAddWindow(btnAdd, "Producto",
-                new String[]{"Nombre", "ID Categoría", "Precio", "Stock", "Fecha de expiración"},
+                new String[]{"Nombre", "Categoría", "Precio", "Stock", "Fecha de expiración"},
                 this::loadProductsView);
     }
 
@@ -310,6 +312,7 @@ public class MainWindow extends JFrame {
             loadSellView();
         });
 
+
         List<Invoice> invoices = invoiceController.getAllInvoices();
         currentTableData = updateTable(
                 tablesContainer,
@@ -325,30 +328,48 @@ public class MainWindow extends JFrame {
                         ""
                 },
 
-                e -> { // Editar
-                    int row = e.getID();
-                    int idLog = (int) currentTableData[row][0];
-                    String[] values = {
-                            String.valueOf(currentTableData[row][1]),
-                            String.valueOf(currentTableData[row][2]),
-                            String.valueOf(currentTableData[row][3]),
-                            String.valueOf(currentTableData[row][4]),
-                    };
-                    String[] labels = {"ID Producto", "Tipo de movimiento", "Cantidad"};
-                    openUpdateDialog("Ventas", labels, values, idLog, this::loadSellView);
-                },
-                e -> { // Eliminar
+                null,
+
+                e -> {
                     int row = e.getID();
                     int idInvoice = (int) currentTableData[row][0];
-                    confirmAndDelete("Log #" + idInvoice, () -> invoiceController.deleteInvoice(idInvoice), this::loadSellView);
+                    confirmAndDelete("Factura #" + idInvoice, () -> invoiceController.deleteInvoice(idInvoice), this::loadSellView);
                 }
         );
 
     }
 
     private void loadOrdersView() {
-        tablesContainer.setViewportView(new JPanel());
-        openAddWindow(btnAdd, "Nuevo Pedido", new String[]{"Proveedor", "Productos", "Estado"}, () -> {});
+        for (ActionListener l : btnAdd.getActionListeners()) btnAdd.removeActionListener(l);
+        btnAdd.addActionListener(e -> {
+            OrderDialog dialog = new OrderDialog(this);
+            dialog.setVisible(true);
+            loadOrdersView();
+        });
+
+        List<PurchaseOrder> purchaseOrders =  purchaseOrderController.getAllPurchaseOrders();
+
+        currentTableData = updateTable(
+                tablesContainer,
+                purchaseOrders,
+                new String[]{"ID Pedido", "Proveedor", "Fecha", "Estado", "Total", "Acciones"},
+
+                p -> new Object[]{
+                        p.getIdPurchaseOrder(),
+                        p.getSupplier().getName(),
+                        p.getOrderDate(),
+                        p.getStatus(),
+                        p.getTotal(),
+                        ""
+                },
+                null,
+                e -> { // Eliminar
+                    int row = e.getID();
+                    int idOrder = (int) currentTableData[row][0];
+                    confirmAndDelete("Pedido #" + idOrder, () -> purchaseOrderController.deletePurchaseOrder(idOrder), this::loadOrdersView);
+                }
+        );
+
     }
 
     // --- UTILS & HELPERS ---

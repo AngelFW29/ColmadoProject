@@ -42,4 +42,9 @@ public class CustomerController {
         return customerDAO.findAll();
     }
 
+    // Find customer by name
+    public Customer getCustomerByName(String name) {
+        return customerDAO.findCustomerByName(name);
+    }
+
 }

@@ -4,7 +4,6 @@ import Model.PurchaseOrder;
 import Model.PurchaseOrderDetails;
 import Model.PurchaseOrderStatus;
 import Model.Supplier;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -15,18 +14,14 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
     private final SupplierDAO supplierDAO;
     private final PurchaseOrderDetailsDAO detailDAO;
 
-    public PurchaseOrderDAO(ConnectionMySQL CONNECTION) {
-        this.CONNECTION = CONNECTION;
+    public PurchaseOrderDAO() {
+        this.CONNECTION = ConnectionMySQL.getInstance();
         this.supplierDAO = new SupplierDAO();
         this.detailDAO = new PurchaseOrderDetailsDAO();
     }
 
     @Override
     public boolean create(PurchaseOrder entity) {
-        // Este método guarda la cabecera. Para guardar los detalles,
-        // normalmente lo manejarás desde el "Service" (Lógica de Negocio),
-        // porque necesitas el ID generado de esta orden para guardar los productos.
-
         String query = "INSERT INTO PurchaseOrder(id_supplier, order_date, total, status) VALUES (?, ?, ?, ?)";
 
         try {
@@ -34,7 +29,7 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
                     entity.getSupplier().getId(),
                     entity.getOrderDate(),
                     entity.getTotal(),
-                    entity.getStatus().name()
+                    entity.getStatus().getDbValue()
             );
             return (rows > 0);
         } catch (SQLException e) {
@@ -47,10 +42,17 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
         String query = "SELECT * FROM PurchaseOrder WHERE id_purchase_order = ?";
 
         try (ResultSet rs = CONNECTION.executeQuery(query, id)) {
-
             if (rs.next()) {
                 Supplier supplier = this.supplierDAO.read(rs.getInt("id_supplier"));
-                PurchaseOrderStatus status = PurchaseOrderStatus.valueOf(rs.getString("status"));
+
+                String statusStr = rs.getString("status");
+                PurchaseOrderStatus status = PurchaseOrderStatus.PENDIENTE;
+                for (PurchaseOrderStatus s : PurchaseOrderStatus.values()) {
+                    if (s.getDbValue().equalsIgnoreCase(statusStr)) {
+                        status = s;
+                        break;
+                    }
+                }
 
                 PurchaseOrder po = new PurchaseOrder(
                         rs.getInt("id_purchase_order"),
@@ -58,20 +60,66 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
                         rs.getTimestamp("order_date").toLocalDateTime(),
                         status
                 );
+                po.setTotal(rs.getDouble("total"));
 
                 List<PurchaseOrderDetails> details = detailDAO.findAllByOrderId(id);
                 po.setDetails(details);
 
                 return po;
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Error al consultar la orden: " + e.getMessage(), e);
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Error de datos: El estado en la BD no coincide", e);
+        }
+        return null;
+    }
+
+
+    @Override
+    public List<PurchaseOrder> findAll() {
+        List<PurchaseOrder> orders = new ArrayList<>();
+        String sql = "SELECT * FROM PurchaseOrder";
+
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            while (rs.next()) {
+                orders.add(mapResultSet(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar órdenes: " + e.getMessage(), e);
+        }
+        return orders;
+    }
+
+    private PurchaseOrder mapResultSet(ResultSet rs) throws SQLException {
+        Supplier supplier = this.supplierDAO.read(rs.getInt("id_supplier"));
+
+        String statusStr = rs.getString("status");
+        PurchaseOrderStatus status = PurchaseOrderStatus.PENDIENTE;
+
+        for (PurchaseOrderStatus s : PurchaseOrderStatus.values()) {
+            if (s.getDbValue().equalsIgnoreCase(statusStr)) {
+                status = s;
+                break;
+            }
         }
 
-        return null;
+        return new PurchaseOrder(
+                rs.getInt("id_purchase_order"),
+                supplier,
+                rs.getTimestamp("order_date").toLocalDateTime(),
+                status
+        );
+    }
+
+    public int getLastInsertedId() {
+        String sql = "SELECT MAX(id_purchase_order) AS last_id FROM PurchaseOrder";
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt("last_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     @Override
@@ -101,32 +149,5 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
         } catch (SQLException e) {
             throw new RuntimeException("Error al eliminar la orden: " + e.getMessage(), e);
         }
-    }
-
-    @Override
-    public List<PurchaseOrder> findAll() {
-        List<PurchaseOrder> orders = new ArrayList<>();
-        String sql = "SELECT * FROM PurchaseOrder";
-
-        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
-            while (rs.next()) {
-                Supplier supplier = this.supplierDAO.read(rs.getInt("id_supplier"));
-                PurchaseOrderStatus status = PurchaseOrderStatus.valueOf(rs.getString("status"));
-
-                PurchaseOrder po = new PurchaseOrder(
-                        rs.getInt("id_purchase_order"),
-                        supplier,
-                        rs.getTimestamp("order_date").toLocalDateTime(),
-                        status
-                );
-
-                po.setDetails(detailDAO.findAllByOrderId(po.getIdPurchaseOrder()));
-
-                orders.add(po);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error al listar las órdenes: " + e.getMessage(), e);
-        }
-        return orders;
     }
 }

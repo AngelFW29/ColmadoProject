@@ -9,6 +9,7 @@ public class PurchaseOrder {
     private Supplier supplier;
     private LocalDateTime orderDate;
     private PurchaseOrderStatus status;
+    private Double total = 0.0;
     private List<PurchaseOrderDetails> details = new ArrayList<>();
 
     public PurchaseOrder() {}
@@ -21,9 +22,16 @@ public class PurchaseOrder {
     }
 
     public double getTotal() {
-        return details.stream()
-                .mapToDouble(PurchaseOrderDetails::getSubTotal)
-                .sum();
+        if (details != null && !details.isEmpty()) {
+            return details.stream()
+                    .mapToDouble(PurchaseOrderDetails::getSubTotal)
+                    .sum();
+        }
+        return total != null ? total : 0.0;
+    }
+
+    public void setTotal(Double total) {
+        this.total = total;
     }
 
     public int getIdPurchaseOrder() {

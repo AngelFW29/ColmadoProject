@@ -84,4 +84,38 @@ public class CategoryProductDAO implements ICRUD<ProductCategory> {
         }
         return categories;
     }
+
+    public ArrayList<String> findAllNames() throws RuntimeException {
+        ArrayList<String> categoriesName = new ArrayList<>();
+        String sql = "SELECT name FROM Category";
+
+        try (ResultSet rs = conexion.executeQuery(sql)) {
+            while (rs.next()) {
+                categoriesName.add(rs.getString("name"));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar las categorías: " + e.getMessage(), e);
+        }
+        return categoriesName;
+    }
+
+    public ProductCategory searchByName(String name) throws RuntimeException {
+        ProductCategory category = null;
+
+        String sql = "SELECT * FROM Category where name = ?";
+
+        try (ResultSet rs = conexion.executeQuery(sql, name)) {
+            while (rs.next()) {
+                category = new ProductCategory(
+                        rs.getInt("id_category"),
+                        rs.getString("name")
+                );
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al listar las categorías: " + e.getMessage(), e);
+        }
+        return category;
+    }
+
+
 }

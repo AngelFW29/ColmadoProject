@@ -1,13 +1,7 @@
 package View;
 
-import Controller.CustomerController;
-import Controller.InventoryLogController;
-import Controller.ProductController;
-import Controller.SupplierCotroller;
-import DAO.CustomerDAO;
-import DAO.InventoryLogDAO;
-import DAO.ProductDAO;
-import DAO.SupplierDAO;
+import Controller.*;
+import DAO.*;
 import Model.MovementType;
 import Util.DynamicFormPanel;
 
@@ -62,12 +56,15 @@ public class AddWindow extends JFrame {
         try {
             switch (title) {
                 case "Producto":
-                    ProductDAO productDAO = new ProductDAO();
-                    ProductController productController = new ProductController(productDAO);
+                    ProductController productController = new ProductController(new ProductDAO());
+                    CategoryController categoryController = new CategoryController(new CategoryProductDAO());
 
                     String name = data.get("Nombre");
 
-                    int idCategory = Integer.parseInt(data.get("ID Categoría"));
+                    String category = String.valueOf(data.get("Categoría"));
+                    int idCategory = categoryController.getProductCategoryByName(category).getIdCategory();
+
+
                     Double unitPrice = Double.parseDouble(data.get("Precio"));
                     int inventoryQuantity = Integer.parseInt(data.get("Stock"));
 

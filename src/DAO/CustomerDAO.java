@@ -101,4 +101,22 @@ public class CustomerDAO implements ICRUD<Customer> {
         }
         return customers;
     }
+
+    public Customer findCustomerByName(String name) {
+        String sql = "SELECT * FROM Person WHERE name = ? AND type_person = 'Cliente'";
+        try (ResultSet rs = conexion.executeQuery(sql, name)) {
+            if (rs.next()) {
+                return new Customer(
+                        rs.getInt("id_person"),
+                        rs.getString("name"),
+                        rs.getString("address"),
+                        rs.getString("phone"),
+                        rs.getString("fiscal_identification")
+                );
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
