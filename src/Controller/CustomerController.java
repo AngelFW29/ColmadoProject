@@ -47,4 +47,16 @@ public class CustomerController {
         return customerDAO.findCustomerByName(name);
     }
 
+    public List<Customer> getSearchCustomers(String filter) {
+        return customerDAO.searchCustomers(filter);
+    }
+
+    public int getCountCustomers() {
+        return customerDAO.countCustomers();
+    }
+
+    public int getNewCustomers() {
+        return customerDAO.newCustomers();
+    }
+
 }

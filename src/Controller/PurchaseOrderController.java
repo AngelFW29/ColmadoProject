@@ -37,5 +37,19 @@ public class PurchaseOrderController {
         return purchaseOrderDAO.findAll();
     }
 
+    public int getPendingOrder() {
+        return purchaseOrderDAO.pendingOrder();
+    }
+
+    public int getCountOrder() {
+        return purchaseOrderDAO.countPurchaseOrder();
+    }
+    public int getReceivedOrder() {
+        return purchaseOrderDAO.receivedOrder();
+    }
+
+    public List<PurchaseOrder> getPurchase(String filter) {
+        return purchaseOrderDAO.searchPurchaseOrder(filter);
+    }
 
 }

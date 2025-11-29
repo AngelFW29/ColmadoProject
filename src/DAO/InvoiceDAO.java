@@ -3,6 +3,7 @@ package DAO;
 import Model.Invoice;
 import Model.Customer;
 import Model.PaymentMethod;
+import Model.Product;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -96,6 +97,7 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         return invoices;
     }
 
+    // thirdStatsPanel Invoice
     public double getTodaySales() {
         String sql = "SELECT SUM(total) AS Ventas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
         try (ResultSet rs = CONNECTION.executeQuery(sql)) {
@@ -156,5 +158,52 @@ public class InvoiceDAO implements ICRUD<Invoice> {
             e.printStackTrace();
         }
         return -1;
+    }
+
+    // firstStatsPanel Invoice
+    public int countInvoices() {
+        String sql = "SELECT COUNT(*) AS total_facturas FROM Invoice";
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) {
+                return rs.getInt("total_facturas");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // secondStatsPanel Invoice
+    public int countInvoicesToday() {
+        String sql = "SELECT COUNT(*) AS facturas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
+
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("facturas_hoy");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public List<Invoice> searchInvoice(String filter) {
+        List<Invoice> invoices = new ArrayList<>();
+        String sql = """ 
+                SELECT * FROM Invoice 
+                WHERE CAST(id_invoice AS CHAR) LIKE ?
+                OR CAST(invoice_date AS CHAR) LIKE ?
+                OR CAST(id_person AS CHAR) LIKE ?
+                OR payment_method LIKE ?
+                """;
+
+        String text = "%" + filter + "%";
+
+        try (ResultSet rs = CONNECTION.executeQuery(sql, text, text, text, text)) {
+            while (rs.next()) {
+                invoices.add(mapResultSetToInvoice(rs));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return invoices;
     }
 }

@@ -40,4 +40,15 @@ public class SupplierCotroller {
         return supplierDAO.findAll();
     }
 
+    public List<Supplier> getSearchSuppliers(String filter) {
+        return supplierDAO.searchSuppliers(filter);
+    }
+
+    public int getCountSuppliers(){
+        return supplierDAO.countSuppliers();
+    }
+
+    public int getNewSuppliers(){
+        return supplierDAO.newSuppliers();
+    }
 }

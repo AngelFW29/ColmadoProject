@@ -1,9 +1,7 @@
 package DAO;
 
-import Model.PurchaseOrder;
-import Model.PurchaseOrderDetails;
-import Model.PurchaseOrderStatus;
-import Model.Supplier;
+import Model.*;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -72,7 +70,6 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
         }
         return null;
     }
-
 
     @Override
     public List<PurchaseOrder> findAll() {
@@ -150,4 +147,62 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
             throw new RuntimeException("Error al eliminar la orden: " + e.getMessage(), e);
         }
     }
+
+    // firstStatsPanel PurchaseOrder
+    public int countPurchaseOrder() {
+        String sql = "SELECT COUNT(*) AS total FROM PurchaseOrder";
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("total");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // secondStatsPanel PurchaseOrder
+    public int pendingOrder() {
+        String sql = "SELECT COUNT(*) AS total_Pendiente FROM PurchaseOrder WHERE status = 'Pendiente'";
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("total_Pendiente");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // thirdStatsPanel PurchaseOrder
+    public int receivedOrder() {
+        String sql = "SELECT COUNT(*) AS total_Recibido FROM PurchaseOrder WHERE status = 'Recibido'";
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("total_Recibido");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public List<PurchaseOrder> searchPurchaseOrder(String filter) {
+        List<PurchaseOrder> orders = new ArrayList<>();
+        String sql = """ 
+                SELECT p.*, s.name AS supplier_name
+                FROM PurchaseOrder p
+                JOIN Person s ON p.id_supplier = s.id_person
+                WHERE s.name LIKE ?
+                   OR CAST(p.id_purchase_order AS CHAR) LIKE ?
+                   OR CAST(p.order_date AS CHAR) LIKE ?
+                   OR p.status LIKE ?
+                """;
+
+        String text = "%" + filter + "%";
+
+        try (ResultSet rs = CONNECTION.executeQuery(sql, text, text, text, text)) {
+            while (rs.next()) {
+                orders.add(mapResultSet(rs));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return orders;
+    }
+
 }

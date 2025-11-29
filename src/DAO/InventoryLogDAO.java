@@ -2,6 +2,8 @@ package DAO;
 
 import Model.InventoryLog;
 import Model.MovementType;
+import Model.Product;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -92,5 +94,79 @@ public class InventoryLogDAO implements ICRUD<InventoryLog> {
         } catch (SQLException e) {
             throw new RuntimeException("Error al actualizar el log de inventario: " + e.getMessage(), e);
         }
-    }    @Override public boolean delete(int id) { return false; }
+    }
+
+    @Override
+    public boolean delete(int id) {
+        return false;
+    }
+
+    //firstStatsPanel  InventoryLog
+    public int countTotalMovements() {
+        String sql = "SELECT COUNT(*) AS total FROM InventoryLog";
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("total");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    //secondStatsPanel InventoryLog
+    public int countEntries() {
+        String sql = """
+                SELECT COUNT(*) AS entradas
+                FROM InventoryLog
+                WHERE movement_type = 'Compra'
+                   OR (movement_type = 'Ajuste' AND quantity_change > 0)
+                """;
+
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("entradas");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // thirdStatsPanel InventoryLog
+    public int countExits() {
+        String sql = """
+                SELECT COUNT(*) AS salidas
+                FROM InventoryLog
+                WHERE movement_type = 'Venta'
+                   OR movement_type = 'Perdida'
+                   OR (movement_type = 'Ajuste' AND quantity_change < 0)
+                """;
+
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("salidas");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public List<InventoryLog> searchInventories(String filter) {
+        List<InventoryLog> logs = new ArrayList<>();
+        String sql = """ 
+                SELECT * FROM InventoryLog 
+                WHERE movement_type LIKE ?
+                OR CAST(id_log AS CHAR) LIKE ?
+                OR CAST(id_product AS CHAR) LIKE ?
+                OR CAST(movement_date AS CHAR) LIKE ?
+                OR CAST(quantity_change AS CHAR) LIKE ?
+                """;
+
+        String text = "%" + filter + "%";
+
+        try (ResultSet rs = CONNECTION.executeQuery(sql, text, text, text, text, text)) {
+            while (rs.next()) {
+                logs.add(mapResultSet(rs));
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return logs;
+    }
 }

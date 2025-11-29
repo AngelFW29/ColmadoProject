@@ -3,6 +3,7 @@ package Controller;
 import DAO.InventoryLogDAO;
 import Model.InventoryLog;
 import Model.MovementType;
+import Model.Product;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,6 +49,20 @@ public class InventoryLogController {
         return inventoryLogDAO.findAll();
     }
 
+    public int getTotalEntries() {
+        return inventoryLogDAO.countEntries();
+    }
+
+    public int getTotalExits() {
+        return inventoryLogDAO.countExits();
+    }
+    public int getTotalMovements(){
+        return  inventoryLogDAO.countTotalMovements();
+    }
+
+    public List<InventoryLog> getSearchInventories(String filter) {
+        return inventoryLogDAO.searchInventories(filter);
+    }
     // RECOMENDACIÓN:
     // Seguramente necesitarás filtrar los movimientos por producto específico.
     // Si agregas un método 'findAllByProductId(int id)' en tu DAO, agrégalo aquí también.

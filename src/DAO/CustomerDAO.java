@@ -38,13 +38,7 @@ public class CustomerDAO implements ICRUD<Customer> {
         String sql = "SELECT * FROM Person WHERE id_person = ? AND type_person = 'Cliente'";
         try (ResultSet rs = conexion.executeQuery(sql, id)) {
             if (rs.next()) {
-                return new Customer(
-                        rs.getInt("id_person"),
-                        rs.getString("name"),
-                        rs.getString("address"),
-                        rs.getString("phone"),
-                        rs.getString("fiscal_identification")
-                );
+                return mapResultSet(rs);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -88,13 +82,7 @@ public class CustomerDAO implements ICRUD<Customer> {
         String sql = "SELECT * FROM Person WHERE type_person = 'Cliente'";
         try (ResultSet rs = conexion.executeQuery(sql)) {
             while (rs.next()) {
-                customers.add(new Customer(
-                        rs.getInt("id_person"),
-                        rs.getString("name"),
-                        rs.getString("address"),
-                        rs.getString("phone"),
-                        rs.getString("fiscal_identification")
-                ));
+                customers.add(mapResultSet(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -119,4 +107,51 @@ public class CustomerDAO implements ICRUD<Customer> {
         }
         return null;
     }
+
+    private Customer mapResultSet(ResultSet rs) throws SQLException {
+        return new Customer(
+                rs.getInt("id_person"),
+                rs.getString("name"),
+                rs.getString("address"),
+                rs.getString("phone"),
+                rs.getString("fiscal_identification")
+        );
+    }
+
+    public List<Customer> searchCustomers(String filter) {
+        List<Customer> customers = new ArrayList<>();
+        String sql = "SELECT * FROM Person WHERE type_person='Cliente' AND (name LIKE ? OR fiscal_identification LIKE ?)";
+        String text = "%" + filter + "%";
+        try (ResultSet rs = conexion.executeQuery(sql, text, text)) {
+            while (rs.next()) {
+                customers.add(mapResultSet(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error al buscar clientes: " + e.getMessage(), e);
+        }
+        return customers;
+    }
+
+    // firstStatsPanel Customer
+    public int countCustomers() {
+        String sql = "SELECT COUNT(*) AS total_cliente FROM Person WHERE type_person='Cliente'";
+        try (ResultSet rs = conexion.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("total_cliente");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    // secondStatsPanel Customer
+    public int newCustomers() {
+        String sql = "SELECT COUNT(*) AS nuevo_cliente FROM Person WHERE type_person='Cliente' AND DATE(created_at) = CURDATE()";
+        try (ResultSet rs = conexion.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt("nuevo_cliente");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
 }

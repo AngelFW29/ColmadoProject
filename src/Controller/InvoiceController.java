@@ -17,6 +17,7 @@ public class InvoiceController {
     public Invoice createInvoice(Customer customer, PaymentMethod paymentMethod) {
         return new Invoice(customer, paymentMethod);
     }
+
     public boolean deleteInvoice(int id) {
         return invoiceDAO.delete(id);
     }
@@ -40,7 +41,19 @@ public class InvoiceController {
         return invoiceDAO.findAll();
     }
 
-    public double getTodaySales(){
+    public double getTodaySales() {
         return invoiceDAO.getTodaySales();
+    }
+
+    public int getCountInvoices() {
+        return invoiceDAO.countInvoices();
+    }
+
+    public int getCountInvoicesToday() {
+        return invoiceDAO.countInvoicesToday();
+    }
+
+    public List<Invoice> getSearchInvoice(String filter) {
+        return invoiceDAO.searchInvoice(filter);
     }
 }
