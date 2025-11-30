@@ -172,7 +172,7 @@ public class MainWindow extends JFrame {
 
         btnSearch.addActionListener(e -> {
             String text = searchTextField.getText().trim();
-            List<InventoryLog> logs = text.isEmpty() ? inventoryLogController.getAllLogs() : inventoryLogController.getAllLogs();
+            List<InventoryLog> logs = text.isEmpty() ? inventoryLogController.getAllLogs() : inventoryLogController.getSearchInventories(text);
             renderInventoryTable(logs);
         });
 
