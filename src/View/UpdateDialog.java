@@ -39,9 +39,9 @@ public class UpdateDialog extends JDialog {
         String[] formValues;
 
         if (fields != null && fields.length > 0) {
-            formFields = Arrays.copyOfRange(fields, 1, fields.length);
+            formFields = Arrays.copyOfRange(fields, 0, fields.length);
             if (values != null && values.length == fields.length) {
-                formValues = Arrays.copyOfRange(values, 1, values.length);
+                formValues = Arrays.copyOfRange(values, 0, values.length);
             } else {
                 formValues = new String[formFields.length];
             }
@@ -108,7 +108,7 @@ public class UpdateDialog extends JDialog {
                             }
                         }
 
-                        success = pc.updateProduct(idToUpdate, name, idCat, price, stock, expDate);
+                        success = pc.updateProduct(idToUpdate, name, idCat, price, expDate);
                     }
                     break;
 

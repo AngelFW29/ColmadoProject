@@ -22,12 +22,7 @@ public class PurchaseOrder {
     }
 
     public double getTotal() {
-        if (details != null && !details.isEmpty()) {
-            return details.stream()
-                    .mapToDouble(PurchaseOrderDetails::getSubTotal)
-                    .sum();
-        }
-        return total != null ? total : 0.0;
+        return this.total;
     }
 
     public void setTotal(Double total) {

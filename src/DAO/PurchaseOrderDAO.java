@@ -99,12 +99,16 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
             }
         }
 
-        return new PurchaseOrder(
+        PurchaseOrder po = new PurchaseOrder(
                 rs.getInt("id_purchase_order"),
                 supplier,
                 rs.getTimestamp("order_date").toLocalDateTime(),
                 status
         );
+
+        po.setTotal(rs.getDouble("total"));
+
+        return po;
     }
 
     public int getLastInsertedId() {
@@ -189,13 +193,12 @@ public class PurchaseOrderDAO implements ICRUD<PurchaseOrder> {
                 JOIN Person s ON p.id_supplier = s.id_person
                 WHERE s.name LIKE ?
                    OR CAST(p.id_purchase_order AS CHAR) LIKE ?
-                   OR CAST(p.order_date AS CHAR) LIKE ?
                    OR p.status LIKE ?
                 """;
 
         String text = "%" + filter + "%";
 
-        try (ResultSet rs = CONNECTION.executeQuery(sql, text, text, text, text)) {
+        try (ResultSet rs = CONNECTION.executeQuery(sql, text, text, text)) {
             while (rs.next()) {
                 orders.add(mapResultSet(rs));
             }

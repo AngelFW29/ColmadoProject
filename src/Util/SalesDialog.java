@@ -185,7 +185,7 @@ public class SalesDialog extends JDialog {
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
-                boolean success = invoiceService.registrarVenta(customer, cart, method);
+                boolean success = invoiceService.saleRegister(customer, cart, method);
 
                 if (success) {
                     JOptionPane.showMessageDialog(this, "¡Venta registrada exitosamente!");

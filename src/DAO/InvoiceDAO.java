@@ -2,8 +2,8 @@ package DAO;
 
 import Model.Invoice;
 import Model.Customer;
+import Model.InvoiceDetails;
 import Model.PaymentMethod;
-import Model.Product;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,25 +16,33 @@ public class InvoiceDAO implements ICRUD<Invoice> {
 
     private final ConnectionMySQL CONNECTION;
     private final InvoiceDetailsDAO invoiceDetailsDAO;
+    private final CustomerDAO customerDAO;
 
-    public InvoiceDAO(InvoiceDetailsDAO invoiceDetailsDAO) {
+    public InvoiceDAO() {
         this.CONNECTION = ConnectionMySQL.getInstance();
-        this.invoiceDetailsDAO = invoiceDetailsDAO;
+        this.invoiceDetailsDAO = new InvoiceDetailsDAO();
+        this.customerDAO = new CustomerDAO();
+    }
+
+    public InvoiceDAO(InvoiceDetailsDAO detailsDAO) {
+        this.CONNECTION = ConnectionMySQL.getInstance();
+        this.invoiceDetailsDAO = detailsDAO;
+        this.customerDAO = new CustomerDAO();
     }
 
     @Override
     public boolean create(Invoice entity) {
-        String query = "INSERT INTO Invoice(id_person, total, payment_method) VALUES (?, ?, ?)";
+        String query = "INSERT INTO Invoice(id_person, total, payment_method, created_at) VALUES (?, ?, ?, ?)";
 
         try {
             int rows = CONNECTION.executeUpdate(query,
                     entity.getCustomer().getId(),
                     entity.getTotal(),
-                    entity.getPaymentMethod().getDisplayName()
+                    entity.getPaymentMethod().getDisplayName(),
+                    entity.getDateTime()
             );
             return rows > 0;
         } catch (SQLException e) {
-            // Imprimimos el error para ver qué valor falló
             System.err.println("Error creating invoice: " + e.getMessage());
             e.printStackTrace();
             return false;
@@ -55,35 +63,6 @@ public class InvoiceDAO implements ICRUD<Invoice> {
     }
 
     @Override
-    public boolean update(Invoice invoice) {
-        String sql = "UPDATE Invoice SET id_person = ?, total = ?, payment_method = ? WHERE id_invoice = ?";
-        try {
-            int rows = CONNECTION.executeUpdate(sql,
-                    invoice.getCustomer().getId(),
-                    invoice.getTotal(),
-                    invoice.getPaymentMethod().name(),
-                    invoice.getId()
-            );
-            return rows > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating invoice: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
-    public boolean delete(int id) {
-        String sql = "DELETE FROM Invoice WHERE id_invoice = ?";
-        try {
-            int rows = CONNECTION.executeUpdate(sql, id);
-            return rows > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting invoice: " + e.getMessage());
-            return false;
-        }
-    }
-
-    @Override
     public List<Invoice> findAll() {
         List<Invoice> invoices = new ArrayList<>();
         String sql = "SELECT * FROM Invoice";
@@ -97,23 +76,15 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         return invoices;
     }
 
-    // thirdStatsPanel Invoice
-    public double getTodaySales() {
-        String sql = "SELECT SUM(total) AS Ventas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
-        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
-            if (rs.next()) {
-                double total = rs.getDouble("Ventas_hoy");
-                return rs.wasNull() ? 0.0 : total;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0.0;
-    }
-
     private Invoice mapResultSetToInvoice(ResultSet rs) throws SQLException {
-        Customer customer = new Customer();
-        customer.setId(rs.getInt("id_person"));
+        int customerId = rs.getInt("id_person");
+        Customer customer = customerDAO.read(customerId);
+
+        if (customer == null) {
+            customer = new Customer();
+            customer.setId(customerId);
+            customer.setName("Cliente Eliminado");
+        }
 
         Timestamp ts = rs.getTimestamp("created_at");
         LocalDateTime dateTime = (ts != null) ? ts.toLocalDateTime() : null;
@@ -121,10 +92,11 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         String pmString = rs.getString("payment_method");
         PaymentMethod pm = PaymentMethod.CASH;
         if (pmString != null) {
-            try {
-                pm = PaymentMethod.valueOf(pmString);
-            } catch (IllegalArgumentException e) {
-                System.err.println("Método de pago desconocido en BD: " + pmString);
+            for (PaymentMethod m : PaymentMethod.values()) {
+                if (m.getDisplayName().equalsIgnoreCase(pmString)) {
+                    pm = m;
+                    break;
+                }
             }
         }
 
@@ -138,11 +110,10 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         );
 
         try {
-            if (invoiceDetailsDAO != null) {
-                invoice.setItems(invoiceDetailsDAO.findAllByInvoiceId(invoice.getId()));
-            }
+            List<InvoiceDetails> details = invoiceDetailsDAO.findAllByInvoiceId(invoice.getId());
+            invoice.setItems(details);
         } catch (Exception e) {
-            System.err.println("Error cargando detalles para factura " + invoice.getId());
+            System.err.println("Error cargando detalles factura #" + invoice.getId());
         }
 
         return invoice;
@@ -160,20 +131,13 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         return -1;
     }
 
-    // firstStatsPanel Invoice
     public int countInvoices() {
-        String sql = "SELECT COUNT(*) AS total_facturas FROM Invoice";
+        String sql = "SELECT COUNT(*) AS total FROM Invoice";
         try (ResultSet rs = CONNECTION.executeQuery(sql)) {
-            if (rs.next()) {
-                return rs.getInt("total_facturas");
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            if (rs.next()) return rs.getInt("total");
+        } catch (SQLException e) { e.printStackTrace(); }
         return 0;
     }
-
-    // secondStatsPanel Invoice
     public int countInvoicesToday() {
         String sql = "SELECT COUNT(*) AS facturas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
 
@@ -182,7 +146,20 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
         return 0;
+
+    }
+
+    public double getTodaySales() {
+        String sql = "SELECT SUM(total) AS ventas_hoy FROM Invoice WHERE DATE(created_at) = CURDATE()";
+        try (ResultSet rs = CONNECTION.executeQuery(sql)) {
+            if (rs.next()) {
+                double total = rs.getDouble("ventas_hoy");
+                return rs.wasNull() ? 0.0 : total;
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0.0;
     }
 
     public List<Invoice> searchInvoice(String filter) {
@@ -190,14 +167,13 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         String sql = """ 
                 SELECT * FROM Invoice 
                 WHERE CAST(id_invoice AS CHAR) LIKE ?
-                OR CAST(invoice_date AS CHAR) LIKE ?
                 OR CAST(id_person AS CHAR) LIKE ?
                 OR payment_method LIKE ?
                 """;
 
         String text = "%" + filter + "%";
 
-        try (ResultSet rs = CONNECTION.executeQuery(sql, text, text, text, text)) {
+        try (ResultSet rs = CONNECTION.executeQuery(sql, text, text, text)) {
             while (rs.next()) {
                 invoices.add(mapResultSetToInvoice(rs));
             }
@@ -206,4 +182,21 @@ public class InvoiceDAO implements ICRUD<Invoice> {
         }
         return invoices;
     }
+
+    @Override
+    public boolean update(Invoice invoice) { return false; }
+
+    @Override
+    public boolean delete(int id) {
+        // Borrar factura (Cuidado: InvoiceDetail debería tener ON DELETE CASCADE en SQL)
+        String sql = "DELETE FROM Invoice WHERE id_invoice = ?";
+        try {
+            int rows = CONNECTION.executeUpdate(sql, id);
+            return rows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting invoice: " + e.getMessage());
+            return false;
+        }
+    }
+
 }

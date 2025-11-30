@@ -43,24 +43,20 @@ public class CustomTableGenerator {
             col.setCellEditor(new ButtonEditor(viewAction, editAction, deleteAction));
 
             int buttonsCount = (viewAction != null ? 1 : 0) + (editAction != null ? 1 : 0) + (deleteAction != null ? 1 : 0);
-            col.setPreferredWidth(buttonsCount * 50 + 10);
+            col.setPreferredWidth(buttonsCount * 45 + 20);
         }
 
         scrollPane = new JScrollPane(table);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
     }
 
-    public JScrollPane getScrollPane() {
-        return scrollPane;
-    }
-
-    public JTable getTable() {
-        return table;
-    }
+    public JScrollPane getScrollPane() { return scrollPane; }
+    public JTable getTable() { return table; }
 
     private void configureAppearance() {
         table.setRowHeight(40);
         table.setShowGrid(true);
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
     }
 
     static class ButtonRenderer extends JPanel implements TableCellRenderer {
@@ -70,55 +66,45 @@ public class CustomTableGenerator {
             setOpaque(true);
 
             if (showView) {
-                JButton btnView = createButton();
-                loadButtonImage(btnView, "/img/ver.png", 25, 25);
-                add(btnView);
+                JButton btn = createButton("/img/ver.png");
+                add(btn);
             }
             if (showEdit) {
-                JButton btnEdit = createButton();
-                loadButtonImage(btnEdit, "/img/edit.png", 25, 25);
-                add(btnEdit);
+                JButton btn = createButton("/img/edit.png");
+                add(btn);
             }
             if (showDelete) {
-                JButton btnDelete = createButton();
-                loadButtonImage(btnDelete, "/img/eliminar.png", 25, 25);
-                add(btnDelete);
+                JButton btn = createButton("/img/eliminar.png");
+                add(btn);
             }
         }
 
-        private JButton createButton() {
+        private JButton createButton(String iconPath) {
             JButton btn = new JButton();
-            btn.setPreferredSize(new Dimension(45, 30));
+            btn.setPreferredSize(new Dimension(40, 30));
+            loadButtonImage(btn, iconPath);
             btn.setBorderPainted(false);
-            btn.setFocusPainted(false);
             btn.setContentAreaFilled(false);
-            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
             return btn;
         }
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                setBackground(table.getSelectionBackground());
-            } else {
-                setBackground(table.getBackground());
-            }
+            setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
             return this;
         }
 
-        private void loadButtonImage(JButton button, String path, int width, int height) {
+        private void loadButtonImage(JButton button, String path) {
             try {
-                if (getClass().getResource(path) == null) {
-                    button.setText("?");
-                    return;
+                if (getClass().getResource(path) != null) {
+                    ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
+                    Image scaled = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                    button.setIcon(new ImageIcon(scaled));
+                } else {
+                    button.setText("O");
                 }
-                ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
-                Image scaledImage = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-                button.setIcon(new ImageIcon(scaledImage));
-            } catch (Exception e) {
-                System.err.println("Error loading image button (" + path + "): " + e.getMessage());
-            }
+            } catch (Exception e) { }
         }
     }
 
@@ -130,54 +116,54 @@ public class CustomTableGenerator {
             super(new JCheckBox());
             panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
 
+            // Lógica para el botón VER
             if (viewAction != null) {
-                JButton btnView = createButton("/img/ver.png"); 
-                btnView.addActionListener(e -> {
+                JButton btn = createButton("/img/ver.png");
+                btn.addActionListener(e -> {
                     viewAction.actionPerformed(new java.awt.event.ActionEvent(this, currentRow, "view"));
                     fireEditingStopped();
                 });
-                panel.add(btnView);
+                panel.add(btn);
             }
 
             if (editAction != null) {
-                JButton btnEdit = createButton("/img/edit.png");
-                btnEdit.addActionListener(e -> {
+                JButton btn = createButton("/img/edit.png");
+                btn.addActionListener(e -> {
                     editAction.actionPerformed(new java.awt.event.ActionEvent(this, currentRow, "edit"));
                     fireEditingStopped();
                 });
-                panel.add(btnEdit);
+                panel.add(btn);
             }
 
             if (deleteAction != null) {
-                JButton btnDelete = createButton("/img/eliminar.png");
-                btnDelete.addActionListener(e -> {
+                JButton btn = createButton("/img/eliminar.png");
+                btn.addActionListener(e -> {
                     deleteAction.actionPerformed(new java.awt.event.ActionEvent(this, currentRow, "delete"));
                     fireEditingStopped();
                 });
-                panel.add(btnDelete);
+                panel.add(btn);
             }
         }
 
         private JButton createButton(String iconPath) {
             JButton btn = new JButton();
-            btn.setPreferredSize(new Dimension(45, 30));
-
-            loadButtonImage(btn, iconPath, 25, 25);
+            btn.setPreferredSize(new Dimension(40, 30));
+            loadButtonImage(btn, iconPath);
             btn.setBorderPainted(false);
             btn.setFocusPainted(false);
             return btn;
         }
 
-        private void loadButtonImage(JButton button, String path, int width, int height) {
+        private void loadButtonImage(JButton button, String path) {
             try {
                 if (getClass().getResource(path) != null) {
                     ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource(path)));
-                    Image scaledImage = icon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-                    button.setIcon(new ImageIcon(scaledImage));
+                    Image scaled = icon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+                    button.setIcon(new ImageIcon(scaled));
                 } else {
-                    button.setText("...");
+                    button.setText("X");
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) { }
         }
 
         @Override
@@ -189,8 +175,6 @@ public class CustomTableGenerator {
         }
 
         @Override
-        public Object getCellEditorValue() {
-            return "";
-        }
+        public Object getCellEditorValue() { return ""; }
     }
 }

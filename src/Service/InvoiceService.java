@@ -18,7 +18,7 @@ public class InvoiceService {
         this.inventoryLogDAO = new InventoryLogDAO();
     }
 
-    public boolean registrarVenta(Customer customer, List<CartItem> carrito, PaymentMethod paymentMethod) throws Exception {
+    public boolean saleRegister(Customer customer, List<CartItem> carrito, PaymentMethod paymentMethod) throws Exception {
 
         for (CartItem item : carrito) {
             Product p = item.getProduct();
@@ -65,6 +65,7 @@ public class InvoiceService {
             // B) Descontar Inventario
             int nuevoStock = p.getInventoryQuantity() - qty;
             p.setInventoryQuantity(nuevoStock);
+
             productDAO.update(p);
 
             InventoryLog log = new InventoryLog(

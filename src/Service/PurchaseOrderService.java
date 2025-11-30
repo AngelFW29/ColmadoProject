@@ -28,12 +28,15 @@ public class PurchaseOrderService {
 
         double totalCalculado = 0;
         for (CartItem item : items) {
-
             totalCalculado += item.getSubTotal();
         }
+
         order.setTotal(totalCalculado);
 
+        System.out.println("Total a guardar: " + order.getTotal());
+
         boolean orderSaved = orderDAO.create(order);
+
         if (!orderSaved) {
             throw new Exception("Error al guardar la cabecera del pedido.");
         }

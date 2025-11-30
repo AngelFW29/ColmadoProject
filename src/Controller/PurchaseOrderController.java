@@ -4,6 +4,7 @@ import DAO.PurchaseOrderDAO;
 import Model.Supplier;
 import Model.PurchaseOrder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class PurchaseOrderController {
@@ -14,7 +15,7 @@ public class PurchaseOrderController {
     }
 
     public PurchaseOrder createPurchaseOrder(Supplier supplier) {
-        return new PurchaseOrder(0, supplier, java.time.LocalDateTime.now(), null);
+        return new PurchaseOrder(0, supplier, LocalDateTime.now(), null);
     }
 
     public boolean savePurchaseOrder(PurchaseOrder order) {

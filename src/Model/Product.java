@@ -22,9 +22,19 @@ public class Product {
         this.expirationDate = expirationDate;
     }
 
+    public Product(int id, String name, int category, double unitPrice,
+                   LocalDate expirationDate) {
+        this.id = id;
+        this.name = name;
+        this.category = category;
+        this.unitPrice = unitPrice;
+        this.inventoryQuantity = 0;
+        this.expirationDate = expirationDate;
+    }
+
     public Product(String name, int category, double unitPrice,
-                   int inventoryQuantity, LocalDate expirationDate) {
-        this(0, name, category, unitPrice, inventoryQuantity, expirationDate);
+                   LocalDate expirationDate) {
+        this(0, name, category, unitPrice, expirationDate);
     }
 
     public int getId() {
@@ -79,9 +89,10 @@ public class Product {
         int newQuantity = this.inventoryQuantity + qty;
         if (newQuantity < 0) {
             throw new IllegalArgumentException(
-                    "There is insufficient inventory to perform this operation."
+                    "Cantidad insuficiente para realizar esta operación."
             );
         }
-        this.inventoryQuantity = newQuantity;
+
+        setInventoryQuantity(newQuantity);
     }
 }

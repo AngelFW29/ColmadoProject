@@ -63,7 +63,4 @@ public class InventoryLogController {
     public List<InventoryLog> getSearchInventories(String filter) {
         return inventoryLogDAO.searchInventories(filter);
     }
-    // RECOMENDACIÓN:
-    // Seguramente necesitarás filtrar los movimientos por producto específico.
-    // Si agregas un método 'findAllByProductId(int id)' en tu DAO, agrégalo aquí también.
 }

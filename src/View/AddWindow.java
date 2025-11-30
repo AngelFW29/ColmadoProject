@@ -66,14 +66,13 @@ public class AddWindow extends JFrame {
 
 
                     Double unitPrice = Double.parseDouble(data.get("Precio"));
-                    int inventoryQuantity = Integer.parseInt(data.get("Stock"));
 
                     String fechaTexto = data.get("Fecha de expiración");
                     LocalDate expirationDate = (fechaTexto != null && !fechaTexto.isEmpty())
                             ? LocalDate.parse(fechaTexto)
                             : null;
 
-                    exito = productController.addProduct(name, idCategory, unitPrice, inventoryQuantity, expirationDate);
+                    exito = productController.addProduct(name, idCategory, unitPrice, expirationDate);
                     break;
 
                 case "Proveedor":
