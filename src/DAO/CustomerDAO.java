@@ -145,7 +145,7 @@ public class CustomerDAO implements ICRUD<Customer> {
 
     // secondStatsPanel Customer
     public int newCustomers() {
-        String sql = "SELECT COUNT(*) AS nuevo_cliente FROM Person WHERE type_person='Cliente' AND DATE(created_at) = CURDATE()";
+        String sql = "SELECT COUNT(*) AS nuevo_cliente FROM Person WHERE type_person='Cliente' "; // AND DATE(created_at) = CURDATE() - Removido(no existe en DB)
         try (ResultSet rs = conexion.executeQuery(sql)) {
             if (rs.next()) return rs.getInt("nuevo_cliente");
         } catch (SQLException e) {

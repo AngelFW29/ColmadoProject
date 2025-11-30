@@ -127,7 +127,7 @@ public class SupplierDAO implements ICRUD<Supplier> {
 
     // secondStatsPanel Supplier
     public int newSuppliers() {
-        String sql = "SELECT COUNT(*) AS nuevo_proveedor FROM Person WHERE type_person='Proveedor' AND DATE(created_at) = CURDATE()";
+        String sql = "SELECT COUNT(*) AS nuevo_proveedor FROM Person WHERE type_person='Proveedor'"; // AND DATE(created_at) = CURDATE() - Removido(no existe en DB)
         try (ResultSet rs = conexion.executeQuery(sql)) {
             if (rs.next()) return rs.getInt("nuevo_proveedor");
         } catch (SQLException e) {

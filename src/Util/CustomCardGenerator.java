@@ -46,12 +46,10 @@ public class CustomCardGenerator {
     }
 
     private JPanel createCard(Person person, ActionListener editAction, ActionListener deleteAction) {
-        // Aseguramos que el fondo sea blanco explícitamente
         RoundedPanel card = new RoundedPanel(25, Color.WHITE);
         card.setLayout(null);
         card.setPreferredSize(new Dimension(290, 145));
 
-        // --- ICONO ---
         JLabel iconLabel = new JLabel();
         loadLabelImage(iconLabel, "/img/clienteIcon.png", 60, 60);
         iconLabel.setBounds(20, 25, 60, 60);
@@ -64,7 +62,6 @@ public class CustomCardGenerator {
         }
         card.add(iconLabel);
 
-        // --- DATOS ---
         JLabel nameLabel = new JLabel(person.getName());
         nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
         nameLabel.setForeground(Color.BLACK);
@@ -94,16 +91,13 @@ public class CustomCardGenerator {
         phoneLabel.setBounds(95, 75, 180, 20);
         card.add(phoneLabel);
 
-        // --- NUEVO: RNC LABEL (Inferior Izquierda) ---
         JLabel rncLabel = new JLabel("RNC: " + rncValue);
         rncLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        rncLabel.setForeground(new Color(100, 100, 100)); // Un gris un poco más oscuro
-        // Coordenadas: x=20 (margen izquierdo), y=110 (altura de botones)
+        rncLabel.setForeground(new Color(100, 100, 100));
         rncLabel.setBounds(20, 110, 160, 20);
         card.add(rncLabel);
 
 
-        // --- BOTONES ---
         JButton btnEdit = createActionButton("/img/edit.png", new Color(88, 101, 242));
         btnEdit.setBounds(190, 105, 35, 30);
         btnEdit.addActionListener(e -> {

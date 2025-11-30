@@ -18,16 +18,6 @@ import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
 public class MainWindow extends JFrame {
-
-    // --- DAOs ---
-    private ProductDAO productDAO;
-    private CustomerDAO customerDAO;
-    private SupplierDAO supplierDAO;
-    private InventoryLogDAO inventoryLogDAO;
-    private InvoiceDAO invoiceDAO;
-    private InvoiceDetailsDAO invoiceDetailsDAO;
-    private PurchaseOrderDAO purchaseOrderDAO;
-
     // --- Controllers ---
     private ProductController productController;
     private CustomerController customerController;
@@ -72,22 +62,14 @@ public class MainWindow extends JFrame {
     }
 
     private void initializeWindow() {
-        // 1. Inicializar DAOs
-        productDAO = new ProductDAO();
-        customerDAO = new CustomerDAO();
-        supplierDAO = new SupplierDAO();
-        inventoryLogDAO = new InventoryLogDAO();
-        invoiceDetailsDAO = new InvoiceDetailsDAO();
-        invoiceDAO = new InvoiceDAO(invoiceDetailsDAO);
-        purchaseOrderDAO = new PurchaseOrderDAO();
 
         // 2. Inicializar Controladores
-        productController = new ProductController(productDAO);
-        customerController = new CustomerController(customerDAO);
-        supplierController = new SupplierCotroller(supplierDAO);
-        inventoryLogController = new InventoryLogController(inventoryLogDAO);
-        invoiceController = new InvoiceController(invoiceDAO);
-        purchaseOrderController = new PurchaseOrderController(purchaseOrderDAO);
+        productController = new ProductController(new ProductDAO());
+        customerController = new CustomerController(new CustomerDAO());
+        supplierController = new SupplierCotroller(new SupplierDAO());
+        inventoryLogController = new InventoryLogController(new InventoryLogDAO());
+        invoiceController = new InvoiceController(new  InvoiceDAO(new InvoiceDetailsDAO()));
+        purchaseOrderController = new PurchaseOrderController(new PurchaseOrderDAO());
 
         // 3. Cargar Imágenes
         loadLabelImage(logoAppLabel, "/img/appLogo.png", 40, 40);
@@ -160,8 +142,8 @@ public class MainWindow extends JFrame {
 
     private void loadInventoryView() {
         // Actualizar Stats  - Inventory
-        int totalEntries = inventoryLogDAO.countEntries();
-        int totalExits = inventoryLogDAO.countExits();
+        int totalEntries = inventoryLogController.getTotalEntries();
+        int totalExits = inventoryLogController.getTotalExits();
         int totalMovement = inventoryLogController.getTotalMovements();
 
         updateStatPanel(firstStatsPanel, "Total de entradas", String.valueOf(totalEntries));
@@ -225,14 +207,20 @@ public class MainWindow extends JFrame {
 
         renderProductTable(productController.getAllProducts());
 
-        openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "Categoría", "Precio", "Stock", "Fecha de expiración"}, this::loadProductsView);
+        openAddWindow(btnAdd, "Producto", new String[]{"Nombre", "Categoría", "Precio", "Fecha de expiración"}, this::loadProductsView);
     }
     private void renderProductTable(List<Product> products) {
+        CategoryController categoryController = new CategoryController(new CategoryProductDAO());
+
         currentTableData = updateTable(
                 tablesContainer, products,
                 new String[]{"ID", "Nombre", "Categoría", "Precio", "Stock", "Vencimiento", "Acciones"},
                 p -> new Object[]{
-                        p.getId(), p.getName(), p.getCategory(), p.getUnitPrice(), p.getInventoryQuantity(),
+                        p.getId(),
+                        p.getName(),
+                        categoryController.getCategory(p.getCategory()).getNameCategory(),
+                        p.getUnitPrice(),
+                        p.getInventoryQuantity(),
                         p.getExpirationDate() != null ? p.getExpirationDate().toString() : "N/A", ""
                 },
                 null, // Ver
@@ -243,10 +231,9 @@ public class MainWindow extends JFrame {
                             String.valueOf(currentTableData[row][1]), // Nombre
                             String.valueOf(currentTableData[row][2]), // Cat
                             String.valueOf(currentTableData[row][3]), // Precio
-                            String.valueOf(currentTableData[row][4]), // Stock
                             String.valueOf(currentTableData[row][5])  // Fecha
                     };
-                    String[] labels = {"Nombre", "Categoría", "Precio", "Stock", "Fecha de expiración"};
+                    String[] labels = {"Nombre", "Categoría", "Precio", "Fecha de expiración"};
                     openUpdateDialog("Producto", labels, values, id, this::loadProductsView);
                 },
                 e -> { // Eliminar
@@ -261,10 +248,11 @@ public class MainWindow extends JFrame {
     private void loadSuppliersView() {
         // Actualizar Stats  - Suppliers
         int totalsuppliers = supplierController.getCountSuppliers();
-        int totalNewSuppliers = supplierController.getNewSuppliers();
+//        int totalNewSuppliers = supplierController.getNewSuppliers();
+//        updateStatPanel(secondStatsPanel, "Nuevos Proveedores", String.valueOf(totalNewSuppliers));
 
         updateStatPanel(firstStatsPanel, "Total de Proveedores", String.valueOf(totalsuppliers));
-        updateStatPanel(secondStatsPanel, "Nuevos Proveedores", String.valueOf(totalNewSuppliers));
+        secondStatsPanel.setVisible(false);
         thirdStatsPanel.setVisible(false);
 
         for (ActionListener l : btnSearch.getActionListeners()) btnSearch.removeActionListener(l);
@@ -301,10 +289,11 @@ public class MainWindow extends JFrame {
     private void loadCustomersView() {
         // Actualizar Stats  - Customers
         int totalCustomers = customerController.getCountCustomers();
-        int totalNewCustomers = customerController.getNewCustomers();
+//        int totalNewCustomers = customerController.getNewCustomers();
+//        updateStatPanel(secondStatsPanel, "Nuevos Clientes", String.valueOf(totalNewCustomers));
 
         updateStatPanel(firstStatsPanel, "Total de Clientes", String.valueOf(totalCustomers));
-        updateStatPanel(secondStatsPanel, "Nuevos Clientes", String.valueOf(totalNewCustomers));
+        secondStatsPanel.setVisible(false);
         thirdStatsPanel.setVisible(false);
 
         for (ActionListener l : btnSearch.getActionListeners()) btnSearch.removeActionListener(l);
@@ -407,7 +396,7 @@ public class MainWindow extends JFrame {
 
     private void loadOrdersView() {
         // Actualizar Stats  - Orders
-        int pendingOrders = purchaseOrderDAO.pendingOrder();
+        int pendingOrders =  purchaseOrderController.getPendingOrder();
         int recievedOrders = purchaseOrderController.getReceivedOrder();
         int totalOrders = purchaseOrderController.getCountOrder();
 
